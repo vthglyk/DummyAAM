@@ -114,17 +114,23 @@ public class AAMRabbitListener {
 
         if(request != null) {
             String username = request.getUserCredentials().getUsername();
-            if (username.equals("valid") || username.equals("validPlatformOwner")) {
-                Set<OwnedPlatformDetails> set = new HashSet<>();
+            Set<OwnedPlatformDetails> set = new HashSet<>();
+
+            if (username.equals("valid") || username.contains("validPlatformOwner")) {
 
                 OwnedPlatformDetails details = new OwnedPlatformDetails(username + "Platform1",
                         "http://" + username + "Platform1.com",
                         username + "PlatformFriendlyName", new Certificate(), new HashMap<>());
 
                 set.add(details);
-                return set;
             }
 
+            if (username.equals("validPlatformOwner2")) {
+                set.add(new OwnedPlatformDetails(username + "Platform2",
+                        "http://" + username + "Platform2.com",
+                        username + "Platform2FriendlyName", new Certificate(), new HashMap<>()));
+            }
+            return set;
 
         }
 
@@ -167,6 +173,9 @@ public class AAMRabbitListener {
             return new UserDetailsResponse(HttpStatus.OK, new UserDetails());
         if (userManagementRequest.getUserCredentials().getUsername().equals("validPlatformOwner"))
             return new UserDetailsResponse(HttpStatus.OK, new UserDetails(new Credentials("validPlatformOwner", ""),
+                    "", "", UserRole.PLATFORM_OWNER, new HashMap<>(), new HashMap<>()));
+        if (userManagementRequest.getUserCredentials().getUsername().equals("validPlatformOwner2"))
+            return new UserDetailsResponse(HttpStatus.OK, new UserDetails(new Credentials("validPlatformOwner2", ""),
                     "", "", UserRole.PLATFORM_OWNER, new HashMap<>(), new HashMap<>()));
         else if (userManagementRequest.getUserCredentials().getUsername().equals("wrongUsername"))
             return new UserDetailsResponse(HttpStatus.BAD_REQUEST, new UserDetails());

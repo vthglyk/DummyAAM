@@ -3,6 +3,9 @@ package eu.h2020.symbiote.dummyAAM.communication.rabbitlisteners;
 import eu.h2020.symbiote.core.cci.PlatformRegistryResponse;
 import eu.h2020.symbiote.core.model.InterworkingService;
 import eu.h2020.symbiote.core.model.Platform;
+import eu.h2020.symbiote.core.model.RDFFormat;
+import eu.h2020.symbiote.core.model.InformationModel;
+import eu.h2020.symbiote.core.internal.InformationModelListResponse;
 import org.apache.commons.lang3.builder.ReflectionToStringBuilder;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -13,7 +16,7 @@ import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
 
 import java.util.Arrays;
-
+import java.util.ArrayList;
 
 @Component
 public class RegistryListener {
@@ -110,4 +113,44 @@ public class RegistryListener {
         response.setStatus(200);
         return response;
     }
+
+    @RabbitListener(bindings = @QueueBinding(
+            value = @Queue(value = "registryListInfoModelRequest", durable = "${rabbit.exchange.platform.durable}",
+                    autoDelete = "${rabbit.exchange.platform.autodelete}", exclusive = "false"),
+            exchange = @Exchange(value = "${rabbit.exchange.platform.name}", ignoreDeclarationExceptions = "true",
+                    durable = "${rabbit.exchange.platform.durable}", autoDelete  = "${rabbit.exchange.platform.autodelete}",
+                    internal = "${rabbit.exchange.platform.internal}", type = "${rabbit.exchange.platform.type}"),
+            key = "${rabbit.routingKey.platform.model.allInformationModelsRequested}")
+    )
+    public InformationModelListResponse listInformationModels(String s) {
+
+        log.info("listInformationModels");
+
+
+        InformationModelListResponse response = new InformationModelListResponse();
+        response.setMessage("OK");
+        response.setStatus(200);
+        InformationModel model1 = new InformationModel();
+        model1.setId("model1_id");
+        model1.setName("model1_name");
+        model1.setOwner("model1_owner");
+        model1.setUri("model1_uri");
+        model1.setRdf("model1_rdf");
+        model1.setRdfFormat(RDFFormat.JSONLD);
+
+        InformationModel model2 = new InformationModel();
+        model2.setId("model2_id");
+        model2.setName("model2_name");
+        model2.setOwner("model2_owner");
+        model2.setUri("model2_uri");
+        model2.setRdf("model2_rdf");
+        model2.setRdfFormat(RDFFormat.N3);
+
+        ArrayList<InformationModel> informationModels = new ArrayList<>();
+        informationModels.add(model1);
+        informationModels.add(model2);
+        response.setInformationModels(informationModels);
+        return response;
+    }
+
 }

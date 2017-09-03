@@ -60,47 +60,6 @@ public class AAMRabbitListener {
     }
 
     @RabbitListener(bindings = @QueueBinding(
-            value = @Queue(value = "aamLoginRequest", durable = "${rabbit.exchange.aam.durable}",
-                    autoDelete = "${rabbit.exchange.aam.autodelete}", exclusive = "false"),
-            exchange = @Exchange(value = "${rabbit.exchange.aam.name}", ignoreDeclarationExceptions = "true",
-                    durable = "${rabbit.exchange.aam.durable}", autoDelete  = "${rabbit.exchange.aam.autodelete}",
-                    internal = "${rabbit.exchange.aam.internal}", type = "${rabbit.exchange.aam.type}"),
-            key = "${rabbit.routingKey.getHomeToken.request}")
-    )
-    public Token loginRequest(Credentials credentials) {
-
-        log.info("loginRequest: " + ReflectionToStringBuilder.toString(credentials));
-
-
-        try {
-            final String ALIAS = "test aam keystore";
-            KeyStore ks = KeyStore.getInstance("PKCS12", "BC");
-            ks.load(new FileInputStream("./src/main/resources/TestAAM.keystore"), "1234567".toCharArray());
-            Key key = ks.getKey(ALIAS, "1234567".toCharArray());
-
-            HashMap<String, String> attributes = new HashMap<>();
-            if (credentials.getUsername().equals("platformExists"))
-                attributes.put(CoreAttributes.OWNED_PLATFORM.toString(), "platformExists");
-            else if (credentials.getUsername().equals("toCreatePlatform"))
-                attributes.put(CoreAttributes.OWNED_PLATFORM.toString(), "toCreatePlatform");
-            else
-                attributes.put(CoreAttributes.OWNED_PLATFORM.toString(), "noPlatform");
-
-            String tokenString = buildAuthorizationToken(credentials.getUsername(), attributes, ks.getCertificate
-                    (ALIAS).getPublicKey().getEncoded(), Token.Type.HOME, DateUtil.addDays(new Date(), 1)
-                    .getTime(), "adminTestAAM", ks.getCertificate(ALIAS).getPublicKey(), (PrivateKey) key);
-
-            return new Token(tokenString);
-        } catch (KeyStoreException | NoSuchAlgorithmException | CertificateException | IOException |
-                UnrecoverableKeyException | NoSuchProviderException |
-                ValidationException e) {
-            log.error(e);
-        }
-
-        return null;
-    }
-
-    @RabbitListener(bindings = @QueueBinding(
             value = @Queue(value = "aamOwnedPlatformDetailsRequest", durable = "${rabbit.exchange.aam.durable}",
                     autoDelete = "${rabbit.exchange.aam.autodelete}", exclusive = "false"),
             exchange = @Exchange(value = "${rabbit.exchange.aam.name}", ignoreDeclarationExceptions = "true",
@@ -116,7 +75,11 @@ public class AAMRabbitListener {
             String username = request.getUserCredentials().getUsername();
             Set<OwnedPlatformDetails> set = new HashSet<>();
 
-            if (username.equals("valid") || username.contains("validPlatformOwner")) {
+            if (username.equals("valid")) {
+                return set;
+            }
+
+            if (username.contains("validPlatformOwner")) {
 
                 OwnedPlatformDetails details = new OwnedPlatformDetails(username + "Platform1",
                         "http://" + username + "Platform1.com",

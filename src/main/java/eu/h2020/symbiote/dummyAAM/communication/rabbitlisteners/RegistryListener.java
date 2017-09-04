@@ -36,8 +36,15 @@ public class RegistryListener {
 
         PlatformRegistryResponse response = new PlatformRegistryResponse();
 
-        if (platform.getComments().get(0).equals("error"))
+        if (platform.getLabels().get(0).equals("reg400") ||
+                platform.getLabels().get(0).equals("reg401")) {
             response.setStatus(400);
+            response.setMessage("Status 400");
+        }
+        else if (platform.getLabels().get(0).equals("reg500")) {
+            response.setStatus(500);
+            response.setMessage("Status 500");
+        }
         else
             response.setStatus(200);
 
@@ -140,15 +147,33 @@ public class RegistryListener {
 
         InformationModel model2 = new InformationModel();
         model2.setId("model2_id");
-        model2.setName("model2_name");
+        model2.setName("Model2_name");
         model2.setOwner("model2_owner");
         model2.setUri("model2_uri");
         model2.setRdf("model2_rdf");
         model2.setRdfFormat(RDFFormat.N3);
 
+        InformationModel model3 = new InformationModel();
+        model3.setId("model3_id");
+        model3.setName("a_name");
+        model3.setOwner("model3_owner");
+        model3.setUri("model3_uri");
+        model3.setRdf("model3_rdf");
+        model3.setRdfFormat(RDFFormat.JSONLD);
+
+        InformationModel model4 = new InformationModel();
+        model4.setId("model3_id");
+        model4.setName("A_name");
+        model4.setOwner("model3_owner");
+        model4.setUri("model3_uri");
+        model4.setRdf("model3_rdf");
+        model4.setRdfFormat(RDFFormat.JSONLD);
+
         ArrayList<InformationModel> informationModels = new ArrayList<>();
         informationModels.add(model1);
         informationModels.add(model2);
+        informationModels.add(model3);
+        informationModels.add(model4);
         response.setInformationModels(informationModels);
         return response;
     }

@@ -5,6 +5,7 @@ import eu.h2020.symbiote.security.commons.SecurityConstants;
 import eu.h2020.symbiote.security.commons.Token;
 import eu.h2020.symbiote.security.commons.enums.CoreAttributes;
 import eu.h2020.symbiote.security.commons.enums.ManagementStatus;
+import eu.h2020.symbiote.security.commons.enums.OperationType;
 import eu.h2020.symbiote.security.commons.enums.UserRole;
 import eu.h2020.symbiote.security.commons.exceptions.custom.MalformedJWTException;
 import eu.h2020.symbiote.security.commons.exceptions.custom.ValidationException;
@@ -41,20 +42,37 @@ public class AAMRabbitListener {
     }
 
     @RabbitListener(bindings = @QueueBinding(
-            value = @Queue(value = "aamPlatformRegistrationRequest", durable = "${rabbit.exchange.aam.durable}",
+            value = @Queue(value = "aamPlatformManagementRequest", durable = "${rabbit.exchange.aam.durable}",
                     autoDelete = "${rabbit.exchange.aam.autodelete}", exclusive = "false"),
             exchange = @Exchange(value = "${rabbit.exchange.aam.name}", ignoreDeclarationExceptions = "true",
                     durable = "${rabbit.exchange.aam.durable}", autoDelete  = "${rabbit.exchange.aam.autodelete}",
                     internal = "${rabbit.exchange.aam.internal}", type = "${rabbit.exchange.aam.type}"),
             key = "${rabbit.routingKey.manage.platform.request}")
     )
-    public PlatformManagementResponse platformRegistrationRequest(PlatformManagementRequest platformManagementRequest) {
+    public PlatformManagementResponse platformManagementRequest(PlatformManagementRequest platformManagementRequest) {
 
-        log.info("platformRegistrationRequest: "+ ReflectionToStringBuilder.toString(platformManagementRequest));
-
+        log.info("platformManagementRequest: "+ ReflectionToStringBuilder.toString(platformManagementRequest));
         PlatformManagementResponse response = new PlatformManagementResponse();
-        response.setPlatformId(platformManagementRequest.getPlatformInstanceFriendlyName());
-        response.setRegistrationStatus(ManagementStatus.OK);
+
+        if (platformManagementRequest.getOperationType() == OperationType.CREATE) {
+            if (!platformManagementRequest.getPlatformInstanceFriendlyName().equals("exists") &&
+                    !platformManagementRequest.getPlatformInstanceFriendlyName().equals("error")) {
+                response.setPlatformId(platformManagementRequest.getPlatformInstanceFriendlyName());
+                response.setRegistrationStatus(ManagementStatus.OK);
+            } else if (platformManagementRequest.getPlatformInstanceFriendlyName().equals("exists")) {
+                response.setRegistrationStatus(ManagementStatus.PLATFORM_EXISTS);
+            } else if (platformManagementRequest.getPlatformInstanceFriendlyName().equals("error")) {
+                response.setRegistrationStatus(ManagementStatus.ERROR);
+            }
+        } else if (platformManagementRequest.getOperationType() == OperationType.DELETE) {
+            if (!platformManagementRequest.getPlatformInstanceFriendlyName().equals("reg401")) {
+                response.setPlatformId(platformManagementRequest.getPlatformInstanceFriendlyName());
+                response.setRegistrationStatus(ManagementStatus.OK);
+            } else if (platformManagementRequest.getPlatformInstanceFriendlyName().equals("reg401")) {
+                response.setRegistrationStatus(ManagementStatus.ERROR);
+            }
+        }
+
 
         return response;
     }

@@ -3,14 +3,10 @@ package eu.h2020.symbiote.dummyAAM.communication.rabbitlisteners;
 import eu.h2020.symbiote.security.commons.Certificate;
 import eu.h2020.symbiote.security.commons.SecurityConstants;
 import eu.h2020.symbiote.security.commons.Token;
-import eu.h2020.symbiote.security.commons.enums.CoreAttributes;
 import eu.h2020.symbiote.security.commons.enums.ManagementStatus;
 import eu.h2020.symbiote.security.commons.enums.OperationType;
 import eu.h2020.symbiote.security.commons.enums.UserRole;
-import eu.h2020.symbiote.security.commons.exceptions.custom.MalformedJWTException;
-import eu.h2020.symbiote.security.commons.exceptions.custom.ValidationException;
 import eu.h2020.symbiote.security.communication.payloads.*;
-import eu.h2020.symbiote.security.commons.jwt.*;
 import eu.h2020.symbiote.security.helpers.ECDSAHelper;
 import io.jsonwebtoken.JwtBuilder;
 import io.jsonwebtoken.Jwts;
@@ -25,10 +21,8 @@ import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 
-import java.io.FileInputStream;
-import java.io.IOException;
+
 import java.security.*;
-import java.security.cert.CertificateException;
 import java.util.*;
 
 @Component
@@ -54,21 +48,29 @@ public class AAMRabbitListener {
         log.info("platformManagementRequest: "+ ReflectionToStringBuilder.toString(platformManagementRequest));
         PlatformManagementResponse response = new PlatformManagementResponse();
 
-        if (platformManagementRequest.getOperationType() == OperationType.CREATE) {
-            if (!platformManagementRequest.getPlatformInstanceFriendlyName().equals("exists") &&
-                    !platformManagementRequest.getPlatformInstanceFriendlyName().equals("error")) {
-                response.setPlatformId(platformManagementRequest.getPlatformInstanceFriendlyName());
+
+        if (platformManagementRequest.getPlatformOwnerCredentials() == null ||
+                (platformManagementRequest.getPlatformOwnerCredentials().getUsername() == null ||
+                        platformManagementRequest.getPlatformOwnerCredentials().getPassword() == null))
+            response.setRegistrationStatus(ManagementStatus.ERROR);
+        else if (platformManagementRequest.getOperationType() == OperationType.CREATE) {
+            log.info("OperationType.CREATE");
+            if (!platformManagementRequest.getPlatformInstanceId().equals("exists") &&
+                    !platformManagementRequest.getPlatformInstanceId().equals("error")) {
+                response.setPlatformId(platformManagementRequest.getPlatformInstanceId());
                 response.setRegistrationStatus(ManagementStatus.OK);
-            } else if (platformManagementRequest.getPlatformInstanceFriendlyName().equals("exists")) {
+            } else if (platformManagementRequest.getPlatformInstanceId().equals("exists")) {
                 response.setRegistrationStatus(ManagementStatus.PLATFORM_EXISTS);
-            } else if (platformManagementRequest.getPlatformInstanceFriendlyName().equals("error")) {
+            } else if (platformManagementRequest.getPlatformInstanceId().equals("error")) {
                 response.setRegistrationStatus(ManagementStatus.ERROR);
             }
         } else if (platformManagementRequest.getOperationType() == OperationType.DELETE) {
-            if (!platformManagementRequest.getPlatformInstanceFriendlyName().equals("reg401")) {
-                response.setPlatformId(platformManagementRequest.getPlatformInstanceFriendlyName());
+            log.info("OperationType.DELETE");
+            if (!platformManagementRequest.getPlatformInstanceId().equals("reg401") &&
+                    !platformManagementRequest.getPlatformInstanceId().equals("validPlatformOwner2Platform1")) {
+                response.setPlatformId(platformManagementRequest.getPlatformInstanceId());
                 response.setRegistrationStatus(ManagementStatus.OK);
-            } else if (platformManagementRequest.getPlatformInstanceFriendlyName().equals("reg401")) {
+            } else {
                 response.setRegistrationStatus(ManagementStatus.ERROR);
             }
         }
@@ -110,6 +112,9 @@ public class AAMRabbitListener {
                 set.add(new OwnedPlatformDetails(username + "Platform2",
                         "http://" + username + "Platform2.com",
                         username + "Platform2FriendlyName", new Certificate(), new HashMap<>()));
+                set.add(new OwnedPlatformDetails(username + "Platform3",
+                        "http://" + username + "Platform3.com",
+                        username + "Platform3FriendlyName", new Certificate(), new HashMap<>()));
             }
             return set;
 
@@ -129,6 +134,7 @@ public class AAMRabbitListener {
     public ManagementStatus userManagementRequest(UserManagementRequest userManagementRequest) {
 
         log.info("userManagementRequest: "+ ReflectionToStringBuilder.toString(userManagementRequest));
+        log.info("UserDetails: " + ReflectionToStringBuilder.toString(userManagementRequest.getUserCredentials()));
 
         if (userManagementRequest.getUserCredentials().getUsername().equals("valid"))
             return ManagementStatus.OK;

@@ -1,5 +1,7 @@
 package eu.h2020.symbiote.dummyAAM.communication.rabbitlisteners;
 
+import eu.h2020.symbiote.core.cci.InformationModelRequest;
+import eu.h2020.symbiote.core.cci.InformationModelResponse;
 import eu.h2020.symbiote.core.cci.PlatformRegistryResponse;
 import eu.h2020.symbiote.core.model.InterworkingService;
 import eu.h2020.symbiote.core.model.Platform;
@@ -117,7 +119,13 @@ public class RegistryListener {
         log.info("platformRemovalRequest: "+ ReflectionToStringBuilder.toString(platform));
 
         PlatformRegistryResponse response = new PlatformRegistryResponse();
-        response.setStatus(200);
+        if (platform.getId().equals("validPlatformOwner2Platform2")) {
+            response.setStatus(400);
+            response.setMessage("Take care of your resources first!");
+        }
+        else {
+            response.setStatus(200);
+        }
         return response;
     }
 
@@ -148,7 +156,7 @@ public class RegistryListener {
         InformationModel model2 = new InformationModel();
         model2.setId("model2_id");
         model2.setName("Model2_name");
-        model2.setOwner("model2_owner");
+        model2.setOwner("validPlatformOwner2");
         model2.setUri("model2_uri");
         model2.setRdf("model2_rdf");
         model2.setRdfFormat(RDFFormat.N3);
@@ -156,7 +164,7 @@ public class RegistryListener {
         InformationModel model3 = new InformationModel();
         model3.setId("model3_id");
         model3.setName("a_name");
-        model3.setOwner("model3_owner");
+        model3.setOwner("validPlatformOwner2");
         model3.setUri("model3_uri");
         model3.setRdf("model3_rdf");
         model3.setRdfFormat(RDFFormat.JSONLD);
@@ -175,6 +183,31 @@ public class RegistryListener {
         informationModels.add(model3);
         informationModels.add(model4);
         response.setInformationModels(informationModels);
+        return response;
+    }
+
+
+    @RabbitListener(bindings = @QueueBinding(
+            value = @Queue(value = "registrydeleteInformationModel", durable = "${rabbit.exchange.platform.durable}",
+                    autoDelete = "${rabbit.exchange.platform.autodelete}", exclusive = "false"),
+            exchange = @Exchange(value = "${rabbit.exchange.platform.name}", ignoreDeclarationExceptions = "true",
+                    durable = "${rabbit.exchange.platform.durable}", autoDelete  = "${rabbit.exchange.platform.autodelete}",
+                    internal = "${rabbit.exchange.platform.internal}", type = "${rabbit.exchange.platform.type}"),
+            key = "${rabbit.routingKey.platform.model.removed}")
+    )
+    public InformationModelResponse deleteInformationModel(InformationModelRequest request) {
+
+        log.info("deleteInformationModel");
+        InformationModelResponse response = new InformationModelResponse();
+
+        if (request.getInformationModel().getId().equals("model2_id")) {
+            response.setMessage("You cannot delete it");
+            response.setStatus(400);
+        } else {
+            response.setStatus(200);
+        }
+
+
         return response;
     }
 

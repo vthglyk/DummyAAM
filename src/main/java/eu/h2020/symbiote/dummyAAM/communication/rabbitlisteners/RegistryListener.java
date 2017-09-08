@@ -66,44 +66,73 @@ public class RegistryListener {
 
         log.info("platformModificationRequest: "+ ReflectionToStringBuilder.toString(platform));
 
+
         PlatformRegistryResponse response = new PlatformRegistryResponse();
 
-        if (platform.getId().equals("noPlatform") ||
-                (platform.getId().equals("toCreatePlatform") && platform.getComments() == null))
+        if (platform.getId().equals("validPlatformOwner2Platform1")) {
             response.setStatus(400);
-        else if (platform.getId().equals("toCreatePlatform") && platform.getComments() != null) {
-            InterworkingService interworkingService = new InterworkingService();
-            interworkingService.setUrl(platform.getInterworkingServices().get(0).getUrl());
-            interworkingService.setInformationModelId(platform.getInterworkingServices().get(0).getInformationModelId());
-
-            Platform storedPlatform = new Platform();
-            storedPlatform.setId(platform.getId());
-            storedPlatform.setLabels(platform.getLabels());
-            storedPlatform.setComments(platform.getComments());
-            storedPlatform.setInterworkingServices(Arrays.asList(interworkingService));
-
-            response.setMessage("Platform created");
-            response.setPlatform(storedPlatform);
-            response.setStatus(200);
-        }
-        else {
-            InterworkingService interworkingService = new InterworkingService();
-            interworkingService.setUrl("https://platform.com");
-            interworkingService.setInformationModelId("Information Model id");
-
-            Platform storedPlatform = new Platform();
-            storedPlatform.setId("testPlatformId");
-            storedPlatform.setLabels(Arrays.asList("testPlatformName"));
-            storedPlatform.setComments(Arrays.asList("testPlatformDescription"));
-            storedPlatform.setInterworkingServices(Arrays.asList(interworkingService));
-
-            response.setMessage("Platform exists");
-            response.setPlatform(storedPlatform);
-            response.setStatus(200);
+            return response;
         }
 
+        ArrayList<String> labels = new ArrayList<>();
+        ArrayList<String> comments = new ArrayList<>();
+        ArrayList<InterworkingService> interworkingServices = new ArrayList<>();
+
+        labels.add(platform.getId() + "Name");
+        labels.add(platform.getId() + "Label");
+        comments.add(platform.getId() + "Description");
+        comments.add(platform.getId() + "Comment");
+        InterworkingService service = new InterworkingService();
+        service.setInformationModelId("model2_id");
+        service.setUrl(platform.getId() + ".com");
+        interworkingServices.add(service);
+
+        platform.setLabels(labels);
+        platform.setComments(comments);
+        platform.setInterworkingServices(interworkingServices);
+        platform.setEnabler(false);
+
+        response.setStatus(200);
+        response.setPlatform(platform);
 
         return response;
+
+//        if (platform.getId().equals("noPlatform") ||
+//                (platform.getId().equals("toCreatePlatform") && platform.getComments() == null))
+//            response.setStatus(400);
+//        else if (platform.getId().equals("toCreatePlatform") && platform.getComments() != null) {
+//            InterworkingService interworkingService = new InterworkingService();
+//            interworkingService.setUrl(platform.getInterworkingServices().get(0).getUrl());
+//            interworkingService.setInformationModelId(platform.getInterworkingServices().get(0).getInformationModelId());
+//
+//            Platform storedPlatform = new Platform();
+//            storedPlatform.setId(platform.getId());
+//            storedPlatform.setLabels(platform.getLabels());
+//            storedPlatform.setComments(platform.getComments());
+//            storedPlatform.setInterworkingServices(Arrays.asList(interworkingService));
+//
+//            response.setMessage("Platform created");
+//            response.setPlatform(storedPlatform);
+//            response.setStatus(200);
+//        }
+//        else {
+//            InterworkingService interworkingService = new InterworkingService();
+//            interworkingService.setUrl("https://platform.com");
+//            interworkingService.setInformationModelId("Information Model id");
+//
+//            Platform storedPlatform = new Platform();
+//            storedPlatform.setId("testPlatformId");
+//            storedPlatform.setLabels(Arrays.asList("testPlatformName"));
+//            storedPlatform.setComments(Arrays.asList("testPlatformDescription"));
+//            storedPlatform.setInterworkingServices(Arrays.asList(interworkingService));
+//
+//            response.setMessage("Platform exists");
+//            response.setPlatform(storedPlatform);
+//            response.setStatus(200);
+//        }
+
+
+//        return response;
     }
 
     @RabbitListener(bindings = @QueueBinding(

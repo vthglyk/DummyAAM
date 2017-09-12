@@ -17,7 +17,6 @@ import org.springframework.amqp.rabbit.annotation.QueueBinding;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
 
-import java.util.Arrays;
 import java.util.ArrayList;
 
 @Component
@@ -93,7 +92,7 @@ public class RegistryListener {
         platform.setEnabler(true);
 
         response.setStatus(200);
-        response.setPlatform(platform);
+        response.setBody(platform);
 
         return response;
 
@@ -211,7 +210,7 @@ public class RegistryListener {
         informationModels.add(model2);
         informationModels.add(model3);
         informationModels.add(model4);
-        response.setInformationModels(informationModels);
+        response.setBody(informationModels);
         return response;
     }
 
@@ -226,11 +225,11 @@ public class RegistryListener {
     public InformationModelResponse createInformationModel(InformationModelRequest request) {
 
         log.info("createInformationModel");
-        log.info(ReflectionToStringBuilder.toString(request.getInformationModel()));
+        log.info(ReflectionToStringBuilder.toString(request.getBody()));
 
         InformationModelResponse response = new InformationModelResponse();
 
-        if (request.getInformationModel().getName().equals("error")) {
+        if (request.getBody().getName().equals("error")) {
             response.setMessage("You cannot create it");
             response.setStatus(400);
         } else {
@@ -254,7 +253,7 @@ public class RegistryListener {
         log.info("deleteInformationModel");
         InformationModelResponse response = new InformationModelResponse();
 
-        if (request.getInformationModel().getId().equals("model2_id")) {
+        if (request.getBody().getId().equals("model2_id")) {
             response.setMessage("You cannot delete it");
             response.setStatus(400);
         } else {

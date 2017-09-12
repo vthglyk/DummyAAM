@@ -72,7 +72,7 @@ dependencies {
     */
     compile('com.github.symbiote-h2020:SymbIoTeLibraries:develop-SNAPSHOT') { changing = true }
     // compile('com.github.symbiote-h2020:SymbIoTeLibraries:0.2.0')
-    compile('com.github.symbiote-h2020:SymbIoTeSecurity:19.+'){ changing = true }
+    compile('com.github.symbiote-h2020:SymbIoTeSecurity:21.+'){ changing = true }
 
 
 

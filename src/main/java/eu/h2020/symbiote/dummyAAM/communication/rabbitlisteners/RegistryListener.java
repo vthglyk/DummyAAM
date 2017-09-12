@@ -69,10 +69,10 @@ public class RegistryListener {
 
         PlatformRegistryResponse response = new PlatformRegistryResponse();
 
-        if (platform.getId().equals("validPlatformOwner2Platform1")) {
-            response.setStatus(400);
-            return response;
-        }
+//        if (platform.getId().equals("validPlatformOwner2Platform1")) {
+//            response.setStatus(400);
+//            return response;
+//        }
 
         ArrayList<String> labels = new ArrayList<>();
         ArrayList<String> comments = new ArrayList<>();
@@ -83,14 +83,14 @@ public class RegistryListener {
         comments.add(platform.getId() + "Description");
         comments.add(platform.getId() + "Comment");
         InterworkingService service = new InterworkingService();
-        service.setInformationModelId("model2_id");
+        service.setInformationModelId("model3_id");
         service.setUrl(platform.getId() + ".com");
         interworkingServices.add(service);
 
         platform.setLabels(labels);
         platform.setComments(comments);
         platform.setInterworkingServices(interworkingServices);
-        platform.setEnabler(false);
+        platform.setEnabler(true);
 
         response.setStatus(200);
         response.setPlatform(platform);
@@ -199,7 +199,7 @@ public class RegistryListener {
         model3.setRdfFormat(RDFFormat.JSONLD);
 
         InformationModel model4 = new InformationModel();
-        model4.setId("model3_id");
+        model4.setId("model4_id");
         model4.setName("A_name");
         model4.setOwner("model3_owner");
         model4.setUri("model3_uri");
@@ -215,14 +215,39 @@ public class RegistryListener {
         return response;
     }
 
-
     @RabbitListener(bindings = @QueueBinding(
-            value = @Queue(value = "registrydeleteInformationModel", durable = "${rabbit.exchange.platform.durable}",
+            value = @Queue(value = "registryCreateInformationModel", durable = "${rabbit.exchange.platform.durable}",
                     autoDelete = "${rabbit.exchange.platform.autodelete}", exclusive = "false"),
             exchange = @Exchange(value = "${rabbit.exchange.platform.name}", ignoreDeclarationExceptions = "true",
                     durable = "${rabbit.exchange.platform.durable}", autoDelete  = "${rabbit.exchange.platform.autodelete}",
                     internal = "${rabbit.exchange.platform.internal}", type = "${rabbit.exchange.platform.type}"),
-            key = "${rabbit.routingKey.platform.model.removed}")
+            key = "${rabbit.routingKey.platform.model.creationRequested}")
+    )
+    public InformationModelResponse createInformationModel(InformationModelRequest request) {
+
+        log.info("createInformationModel");
+        log.info(ReflectionToStringBuilder.toString(request.getInformationModel()));
+
+        InformationModelResponse response = new InformationModelResponse();
+
+        if (request.getInformationModel().getName().equals("error")) {
+            response.setMessage("You cannot create it");
+            response.setStatus(400);
+        } else {
+            response.setStatus(200);
+        }
+
+
+        return response;
+    }
+
+    @RabbitListener(bindings = @QueueBinding(
+            value = @Queue(value = "registryDeleteInformationModel", durable = "${rabbit.exchange.platform.durable}",
+                    autoDelete = "${rabbit.exchange.platform.autodelete}", exclusive = "false"),
+            exchange = @Exchange(value = "${rabbit.exchange.platform.name}", ignoreDeclarationExceptions = "true",
+                    durable = "${rabbit.exchange.platform.durable}", autoDelete  = "${rabbit.exchange.platform.autodelete}",
+                    internal = "${rabbit.exchange.platform.internal}", type = "${rabbit.exchange.platform.type}"),
+            key = "${rabbit.routingKey.platform.model.removalRequested}")
     )
     public InformationModelResponse deleteInformationModel(InformationModelRequest request) {
 

@@ -112,9 +112,14 @@ public class AAMRabbitListener {
                 set.add(new OwnedPlatformDetails(username + "Platform2",
                         "http://" + username + "Platform2.com",
                         username + "Platform2FriendlyName", new Certificate(), new HashMap<>()));
+
                 set.add(new OwnedPlatformDetails(username + "Platform3",
                         "http://" + username + "Platform3.com",
                         username + "Platform3FriendlyName", new Certificate(), new HashMap<>()));
+
+                set.add(new OwnedPlatformDetails(username + "Platform4",
+                        "http://" + username + "Platform4.com",
+                        username + "Platform4FriendlyName", new Certificate(), new HashMap<>()));
             }
             return set;
 

@@ -1,16 +1,10 @@
 package eu.h2020.symbiote.dummyAAM.communication.rabbitlisteners;
 
 import eu.h2020.symbiote.security.commons.Certificate;
-import eu.h2020.symbiote.security.commons.SecurityConstants;
-import eu.h2020.symbiote.security.commons.Token;
 import eu.h2020.symbiote.security.commons.enums.ManagementStatus;
 import eu.h2020.symbiote.security.commons.enums.OperationType;
 import eu.h2020.symbiote.security.commons.enums.UserRole;
 import eu.h2020.symbiote.security.communication.payloads.*;
-import eu.h2020.symbiote.security.helpers.ECDSAHelper;
-import io.jsonwebtoken.JwtBuilder;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 import org.apache.commons.lang3.builder.ReflectionToStringBuilder;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -47,6 +41,9 @@ public class AAMRabbitListener {
 
         log.info("platformManagementRequest: "+ ReflectionToStringBuilder.toString(platformManagementRequest));
         PlatformManagementResponse response = new PlatformManagementResponse();
+
+        if (platformManagementRequest.getPlatformInstanceId().isEmpty())
+            platformManagementRequest.setPlatformInstanceId("EmptyId");
 
 
         if (platformManagementRequest.getPlatformOwnerCredentials() == null ||
@@ -179,50 +176,30 @@ public class AAMRabbitListener {
         return null;
     }
 
-    private String buildAuthorizationToken(String subject, Map<String, String> attributes, byte[] subjectPublicKey,
-                                           Token.Type tokenType, Long tokenValidity, String issuer,
-                                           PublicKey issuerPublicKey, PrivateKey issuerPrivateKey) {
-        ECDSAHelper.enableECDSAProvider();
+    @RabbitListener(bindings = @QueueBinding(
+            value = @Queue(value = "aamFederationRuleManagementRequestConsumerService", durable = "${rabbit.exchange.aam.durable}",
+                    autoDelete = "${rabbit.exchange.aam.autodelete}", exclusive = "false"),
+            exchange = @Exchange(value = "${rabbit.exchange.aam.name}", ignoreDeclarationExceptions = "true",
+                    durable = "${rabbit.exchange.aam.durable}", autoDelete  = "${rabbit.exchange.aam.autodelete}",
+                    internal = "${rabbit.exchange.aam.internal}", type = "${rabbit.exchange.aam.type}"),
+            key = "${rabbit.routingKey.manage.federation.rule}")
+    )
+    public Map<String, FederationRule> federationRuleManagementRequestConsumerService(FederationRuleManagementRequest request) {
 
-        String jti = String.valueOf(random.nextInt());
-        Map<String, Object> claimsMap = new HashMap<>();
+        log.info("federationRuleManagementRequestConsumerService: "+ ReflectionToStringBuilder.toString(request));
+        Map<String, FederationRule> response = new HashMap<>();
 
-        // Insert AAM Public Key
-        claimsMap.put("ipk", Base64.getEncoder().encodeToString(issuerPublicKey.getEncoded()));
-
-        //Insert issuee Public Key
-        claimsMap.put("spk", Base64.getEncoder().encodeToString(subjectPublicKey));
-
-        //Add symbIoTe related attributes to token
-        if (attributes != null && !attributes.isEmpty()) {
-            for (Map.Entry<String, String> entry : attributes.entrySet()) {
-                claimsMap.put(SecurityConstants.SYMBIOTE_ATTRIBUTES_PREFIX + entry.getKey(), entry.getValue());
+        if (request.getOperationType() == FederationRuleManagementRequest.OperationType.CREATE) {
+            if (request.getFederationRuleId().equals("error"))
+                return null;
+            else {
+                FederationRule federationRule = new FederationRule(request.getFederationRuleId(),
+                        request.getPlatformIds());
+                response.put(request.getFederationRuleId(), federationRule);
+                return response;
             }
         }
 
-        //Insert token type
-        claimsMap.put(SecurityConstants.CLAIM_NAME_TOKEN_TYPE, tokenType);
-
-        JwtBuilder jwtBuilder = Jwts.builder();
-        jwtBuilder.setClaims(claimsMap);
-        jwtBuilder.setId(jti);
-        jwtBuilder.setIssuer(issuer);
-        jwtBuilder.setSubject(subject);
-        jwtBuilder.setIssuedAt(new Date());
-        jwtBuilder.setExpiration(new Date(System.currentTimeMillis() + tokenValidity));
-        jwtBuilder.signWith(SignatureAlgorithm.ES256, issuerPrivateKey);
-
-        return jwtBuilder.compact();
-    }
-
-    static public class DateUtil
-    {
-        static Date addDays(Date date, int days)
-        {
-            Calendar cal = Calendar.getInstance();
-            cal.setTime(date);
-            cal.add(Calendar.DATE, days); //minus number would decrement the days
-            return cal.getTime();
-        }
+        return null;
     }
 }

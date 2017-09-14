@@ -17,6 +17,7 @@ import org.springframework.amqp.rabbit.annotation.QueueBinding;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
 
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 
 @Component
@@ -54,16 +55,24 @@ public class RegistryListener {
 
 
     @RabbitListener(bindings = @QueueBinding(
-            value = @Queue(value = "registryPlatformModificationRequest", durable = "${rabbit.exchange.platform.durable}",
+            value = @Queue(value = "registryGetPlatformDetailsRequest", durable = "${rabbit.exchange.platform.durable}",
                     autoDelete = "${rabbit.exchange.platform.autodelete}", exclusive = "false"),
             exchange = @Exchange(value = "${rabbit.exchange.platform.name}", ignoreDeclarationExceptions = "true",
                     durable = "${rabbit.exchange.platform.durable}", autoDelete  = "${rabbit.exchange.platform.autodelete}",
                     internal = "${rabbit.exchange.platform.internal}", type = "${rabbit.exchange.platform.type}"),
-            key = "${rabbit.routingKey.platform.modificationRequested}")
+            key = "${rabbit.routingKey.platform.platformDetailsRequested}")
     )
-    public PlatformRegistryResponse platformModificationRequest(Platform platform) {
+    public PlatformRegistryResponse getPlatformDetailsRequest(byte[] body) {
 
-        log.info("platformModificationRequest: "+ ReflectionToStringBuilder.toString(platform));
+        String platformId;
+        try {
+            platformId = new String(body, "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+            return null;
+        }
+
+        log.info("getPlatformDetailsRequest: "+ platformId);
 
 
         PlatformRegistryResponse response = new PlatformRegistryResponse();
@@ -77,15 +86,17 @@ public class RegistryListener {
         ArrayList<String> comments = new ArrayList<>();
         ArrayList<InterworkingService> interworkingServices = new ArrayList<>();
 
-        labels.add(platform.getId() + "Name");
-        labels.add(platform.getId() + "Label");
-        comments.add(platform.getId() + "Description");
-        comments.add(platform.getId() + "Comment");
+        labels.add(platformId + "Name");
+        labels.add(platformId + "Label");
+        comments.add(platformId + "Description");
+        comments.add(platformId + "Comment");
         InterworkingService service = new InterworkingService();
         service.setInformationModelId("model3_id");
-        service.setUrl(platform.getId() + ".com");
+        service.setUrl(platformId + ".com");
         interworkingServices.add(service);
 
+        Platform platform = new Platform();
+        platform.setId(platformId);
         platform.setLabels(labels);
         platform.setComments(comments);
         platform.setInterworkingServices(interworkingServices);
@@ -95,43 +106,6 @@ public class RegistryListener {
         response.setBody(platform);
 
         return response;
-
-//        if (platform.getId().equals("noPlatform") ||
-//                (platform.getId().equals("toCreatePlatform") && platform.getComments() == null))
-//            response.setStatus(400);
-//        else if (platform.getId().equals("toCreatePlatform") && platform.getComments() != null) {
-//            InterworkingService interworkingService = new InterworkingService();
-//            interworkingService.setUrl(platform.getInterworkingServices().get(0).getUrl());
-//            interworkingService.setInformationModelId(platform.getInterworkingServices().get(0).getInformationModelId());
-//
-//            Platform storedPlatform = new Platform();
-//            storedPlatform.setId(platform.getId());
-//            storedPlatform.setLabels(platform.getLabels());
-//            storedPlatform.setComments(platform.getComments());
-//            storedPlatform.setInterworkingServices(Arrays.asList(interworkingService));
-//
-//            response.setMessage("Platform created");
-//            response.setPlatform(storedPlatform);
-//            response.setStatus(200);
-//        }
-//        else {
-//            InterworkingService interworkingService = new InterworkingService();
-//            interworkingService.setUrl("https://platform.com");
-//            interworkingService.setInformationModelId("Information Model id");
-//
-//            Platform storedPlatform = new Platform();
-//            storedPlatform.setId("testPlatformId");
-//            storedPlatform.setLabels(Arrays.asList("testPlatformName"));
-//            storedPlatform.setComments(Arrays.asList("testPlatformDescription"));
-//            storedPlatform.setInterworkingServices(Arrays.asList(interworkingService));
-//
-//            response.setMessage("Platform exists");
-//            response.setPlatform(storedPlatform);
-//            response.setStatus(200);
-//        }
-
-
-//        return response;
     }
 
     @RabbitListener(bindings = @QueueBinding(
@@ -165,9 +139,17 @@ public class RegistryListener {
                     internal = "${rabbit.exchange.platform.internal}", type = "${rabbit.exchange.platform.type}"),
             key = "${rabbit.routingKey.platform.model.allInformationModelsRequested}")
     )
-    public InformationModelListResponse listInformationModels(String s) {
+    public InformationModelListResponse listInformationModels(byte[] body) {
 
-        log.info("listInformationModels");
+        String s;
+        try {
+            s = new String(body, "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+            return null;
+        }
+
+        log.info("listInformationModels: " + s);
 
 
         InformationModelListResponse response = new InformationModelListResponse();

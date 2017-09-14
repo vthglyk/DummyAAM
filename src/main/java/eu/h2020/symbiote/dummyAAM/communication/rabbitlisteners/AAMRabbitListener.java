@@ -198,6 +198,26 @@ public class AAMRabbitListener {
                 response.put(request.getFederationRuleId(), federationRule);
                 return response;
             }
+        } else if (request.getOperationType() == FederationRuleManagementRequest.OperationType.READ) {
+            if (request.getFederationRuleId().isEmpty()) {
+                String federationRuleId = "exampleFedId";
+                Set<String> platforms = new HashSet<>();
+                platforms.add("FedPlatform1");
+                platforms.add("FedPlatform2");
+                FederationRule federationRule = new FederationRule(federationRuleId,
+                        platforms);
+                response.put(federationRuleId, federationRule);
+                return response;
+            } else
+                return null;
+        } else if (request.getOperationType() == FederationRuleManagementRequest.OperationType.DELETE) {
+            if (request.getFederationRuleId().equals("exampleFedId")) {
+                FederationRule federationRule = new FederationRule("exampleFedId",
+                        new HashSet<>());
+                response.put("exampleFedId", federationRule);
+                return response;
+            } else
+                return null;
         }
 
         return null;

@@ -3,14 +3,18 @@ package eu.h2020.symbiote.dummyAAM.communication.rabbitlisteners;
 import eu.h2020.symbiote.core.cci.InformationModelRequest;
 import eu.h2020.symbiote.core.cci.InformationModelResponse;
 import eu.h2020.symbiote.core.cci.PlatformRegistryResponse;
-import eu.h2020.symbiote.core.model.InterworkingService;
-import eu.h2020.symbiote.core.model.Platform;
-import eu.h2020.symbiote.core.model.RDFFormat;
-import eu.h2020.symbiote.core.model.InformationModel;
+import eu.h2020.symbiote.core.internal.ClearDataRequest;
+import eu.h2020.symbiote.core.internal.ClearDataResponse;
 import eu.h2020.symbiote.core.internal.InformationModelListResponse;
+
+import eu.h2020.symbiote.core.internal.RDFFormat;
+import eu.h2020.symbiote.model.mim.InformationModel;
+import eu.h2020.symbiote.model.mim.InterworkingService;
+import eu.h2020.symbiote.model.mim.Platform;
 import org.apache.commons.lang3.builder.ReflectionToStringBuilder;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.springframework.amqp.rabbit.annotation.Exchange;
 import org.springframework.amqp.rabbit.annotation.Queue;
 import org.springframework.amqp.rabbit.annotation.QueueBinding;
@@ -38,12 +42,12 @@ public class RegistryListener {
 
         PlatformRegistryResponse response = new PlatformRegistryResponse();
 
-        if (platform.getLabels().get(0).equals("reg400") ||
-                platform.getLabels().get(0).equals("reg401")) {
+        if (platform.getName().equals("reg400") ||
+                platform.getName().equals("reg401")) {
             response.setStatus(400);
             response.setMessage("Status 400");
         }
-        else if (platform.getLabels().get(0).equals("reg500")) {
+        else if (platform.getName().equals("reg500")) {
             response.setStatus(500);
             response.setMessage("Status 500");
         }
@@ -82,14 +86,11 @@ public class RegistryListener {
 //            return response;
 //        }
 
-        ArrayList<String> labels = new ArrayList<>();
-        ArrayList<String> comments = new ArrayList<>();
+        ArrayList<String> description = new ArrayList<>();
         ArrayList<InterworkingService> interworkingServices = new ArrayList<>();
 
-        labels.add(platformId + "Name");
-        labels.add(platformId + "Label");
-        comments.add(platformId + "Description");
-        comments.add(platformId + "Comment");
+        description.add(platformId + "Description");
+        description.add(platformId + "Comment");
         InterworkingService service = new InterworkingService();
         service.setInformationModelId("model3_id");
         service.setUrl(platformId + ".com");
@@ -97,10 +98,15 @@ public class RegistryListener {
 
         Platform platform = new Platform();
         platform.setId(platformId);
-        platform.setLabels(labels);
-        platform.setComments(comments);
+        platform.setName(platformId + "Name");
+        platform.setDescription(description);
         platform.setInterworkingServices(interworkingServices);
-        platform.setEnabler(true);
+
+        if (platform.getId().equals("validPlatformOwner2Platform1"))
+            platform.setEnabler(true);
+        else
+            platform.setEnabler(false);
+
 
         response.setStatus(200);
         response.setBody(platform);
@@ -182,16 +188,25 @@ public class RegistryListener {
         InformationModel model4 = new InformationModel();
         model4.setId("model4_id");
         model4.setName("A_name");
-        model4.setOwner("model3_owner");
-        model4.setUri("model3_uri");
-        model4.setRdf("model3_rdf");
+        model4.setOwner("model4_owner");
+        model4.setUri("model4_uri");
+        model4.setRdf("model4_rdf");
         model4.setRdfFormat(RDFFormat.JSONLD);
+
+        InformationModel model5 = new InformationModel();
+        model5.setId("model5-id");
+        model5.setName("5-name");
+        model5.setOwner("validPlatformOwner2");
+        model5.setUri("model5_uri");
+        model5.setRdf("model5_rdf");
+        model5.setRdfFormat(RDFFormat.N3);
 
         ArrayList<InformationModel> informationModels = new ArrayList<>();
         informationModels.add(model1);
         informationModels.add(model2);
         informationModels.add(model3);
         informationModels.add(model4);
+        informationModels.add(model5);
         response.setBody(informationModels);
         return response;
     }
@@ -232,7 +247,7 @@ public class RegistryListener {
     )
     public InformationModelResponse deleteInformationModel(InformationModelRequest request) {
 
-        log.info("deleteInformationModel");
+        log.info("deleteInformationModel for id: " + request.getBody().getId());
         InformationModelResponse response = new InformationModelResponse();
 
         if (request.getBody().getId().equals("model2_id")) {
@@ -244,6 +259,25 @@ public class RegistryListener {
 
 
         return response;
+    }
+
+    @RabbitListener(bindings = @QueueBinding(
+            value = @Queue(value = "registryClearDataRequest", durable = "${rabbit.exchange.resource.durable}",
+                    autoDelete = "${rabbit.exchange.resource.autodelete}", exclusive = "false"),
+            exchange = @Exchange(value = "${rabbit.exchange.resource.name}", ignoreDeclarationExceptions = "true",
+                    durable = "${rabbit.exchange.resource.durable}", autoDelete  = "${rabbit.exchange.resource.autodelete}",
+                    internal = "${rabbit.exchange.resource.internal}", type = "${rabbit.exchange.resource.type}"),
+            key = "${rabbit.routingKey.resource.clearDataRequested}")
+    )
+    public ClearDataResponse clearData(ClearDataRequest request) {
+
+        log.info("ClearDataRequest for platform: " + ReflectionToStringBuilder.toString(request));
+
+        if (request.getBody().equals("1"))
+            return new ClearDataResponse(200, "Data Cleared", null);
+        else
+            return new ClearDataResponse(400, "Data WERE NOT Cleared", null);
+
     }
 
 }

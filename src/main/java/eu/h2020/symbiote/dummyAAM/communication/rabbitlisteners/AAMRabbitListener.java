@@ -5,9 +5,11 @@ import eu.h2020.symbiote.security.commons.enums.ManagementStatus;
 import eu.h2020.symbiote.security.commons.enums.OperationType;
 import eu.h2020.symbiote.security.commons.enums.UserRole;
 import eu.h2020.symbiote.security.communication.payloads.*;
+
 import org.apache.commons.lang3.builder.ReflectionToStringBuilder;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.springframework.amqp.rabbit.annotation.Exchange;
 import org.springframework.amqp.rabbit.annotation.Queue;
 import org.springframework.amqp.rabbit.annotation.QueueBinding;
@@ -20,10 +22,11 @@ import java.security.*;
 import java.util.*;
 
 @Component
-public class AAMRabbitListener {
-    private static Log log = LogFactory.getLog(AAMRabbitListener.class);
+public class
 
-    private SecureRandom random = new SecureRandom();
+
+AAMRabbitListener {
+    private static Log log = LogFactory.getLog(AAMRabbitListener.class);
 
     public AAMRabbitListener() {
         Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
@@ -40,7 +43,6 @@ public class AAMRabbitListener {
     public PlatformManagementResponse platformManagementRequest(PlatformManagementRequest platformManagementRequest) {
 
         log.info("platformManagementRequest: "+ ReflectionToStringBuilder.toString(platformManagementRequest));
-        PlatformManagementResponse response = new PlatformManagementResponse();
 
         if (platformManagementRequest.getPlatformInstanceId().isEmpty())
             platformManagementRequest.setPlatformInstanceId("EmptyId");
@@ -49,31 +51,30 @@ public class AAMRabbitListener {
         if (platformManagementRequest.getPlatformOwnerCredentials() == null ||
                 (platformManagementRequest.getPlatformOwnerCredentials().getUsername() == null ||
                         platformManagementRequest.getPlatformOwnerCredentials().getPassword() == null))
-            response.setRegistrationStatus(ManagementStatus.ERROR);
+            return new PlatformManagementResponse(null, ManagementStatus.ERROR);
         else if (platformManagementRequest.getOperationType() == OperationType.CREATE) {
             log.info("OperationType.CREATE");
             if (!platformManagementRequest.getPlatformInstanceId().equals("exists") &&
                     !platformManagementRequest.getPlatformInstanceId().equals("error")) {
-                response.setPlatformId(platformManagementRequest.getPlatformInstanceId());
-                response.setRegistrationStatus(ManagementStatus.OK);
+                return new PlatformManagementResponse(platformManagementRequest.getPlatformInstanceId(), ManagementStatus.OK);
             } else if (platformManagementRequest.getPlatformInstanceId().equals("exists")) {
-                response.setRegistrationStatus(ManagementStatus.PLATFORM_EXISTS);
+                return new PlatformManagementResponse(null, ManagementStatus.PLATFORM_EXISTS);
             } else if (platformManagementRequest.getPlatformInstanceId().equals("error")) {
-                response.setRegistrationStatus(ManagementStatus.ERROR);
+                return new PlatformManagementResponse(null, ManagementStatus.ERROR);
             }
         } else if (platformManagementRequest.getOperationType() == OperationType.DELETE) {
             log.info("OperationType.DELETE");
             if (!platformManagementRequest.getPlatformInstanceId().equals("reg401") &&
                     !platformManagementRequest.getPlatformInstanceId().equals("validPlatformOwner2Platform1")) {
-                response.setPlatformId(platformManagementRequest.getPlatformInstanceId());
-                response.setRegistrationStatus(ManagementStatus.OK);
+                return new PlatformManagementResponse(platformManagementRequest.getPlatformInstanceId(), ManagementStatus.ERROR);
+
             } else {
-                response.setRegistrationStatus(ManagementStatus.ERROR);
+                return new PlatformManagementResponse(null, ManagementStatus.ERROR);
             }
         }
 
 
-        return response;
+        return new PlatformManagementResponse(null, null);
     }
 
     @RabbitListener(bindings = @QueueBinding(
@@ -117,6 +118,10 @@ public class AAMRabbitListener {
                 set.add(new OwnedPlatformDetails(username + "Platform4",
                         "http://" + username + "Platform4.com",
                         username + "Platform4FriendlyName", new Certificate(), new HashMap<>()));
+
+                set.add(new OwnedPlatformDetails(username + "Platform-5",
+                        "http://" + username + "Platform-5.com",
+                        username + "Platform-5FriendlyName", new Certificate(), new HashMap<>()));
             }
             return set;
 

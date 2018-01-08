@@ -92,8 +92,8 @@ public class RegistryListener {
         description.add(platformId + "Description");
         description.add(platformId + "Comment");
         InterworkingService service = new InterworkingService();
-        service.setInformationModelId("model3_id");
-        service.setUrl(platformId + ".com");
+        service.setInformationModelId("model2_id");
+        service.setUrl(platformId + ".com/");
         interworkingServices.add(service);
 
         Platform platform = new Platform();
@@ -230,6 +230,9 @@ public class RegistryListener {
             response.setMessage("You cannot create it");
             response.setStatus(400);
         } else {
+            InformationModel infoModel = request.getBody();
+            infoModel.setId(infoModel.getName() + "_id");
+            response.setBody(infoModel);
             response.setStatus(200);
         }
 

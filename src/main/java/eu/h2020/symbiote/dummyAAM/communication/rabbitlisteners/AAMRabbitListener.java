@@ -66,9 +66,11 @@ AAMRabbitListener {
             log.info("OperationType.DELETE");
             if (!platformManagementRequest.getPlatformInstanceId().equals("reg401") &&
                     !platformManagementRequest.getPlatformInstanceId().equals("validPlatformOwner2Platform1")) {
-                return new PlatformManagementResponse(platformManagementRequest.getPlatformInstanceId(), ManagementStatus.ERROR);
+                log.info("DELETE was accepted");
+                return new PlatformManagementResponse(platformManagementRequest.getPlatformInstanceId(), ManagementStatus.OK);
 
             } else {
+                log.info("DELETE was rejected");
                 return new PlatformManagementResponse(null, ManagementStatus.ERROR);
             }
         }
@@ -108,15 +110,15 @@ AAMRabbitListener {
 
             if (username.equals("validPlatformOwner2")) {
                 set.add(new OwnedPlatformDetails(username + "Platform2",
-                        "http://" + username + "Platform2.com",
+                        "http://" + username + "Platform2.com:8102",
                         username + "Platform2FriendlyName", new Certificate(), new HashMap<>()));
 
                 set.add(new OwnedPlatformDetails(username + "Platform3",
-                        "http://" + username + "Platform3.com",
+                        "http://" + username + "Platform3.com:8103/",
                         username + "Platform3FriendlyName", new Certificate(), new HashMap<>()));
 
                 set.add(new OwnedPlatformDetails(username + "Platform4",
-                        "http://" + username + "Platform4.com",
+                        "http://" + username + "Platform4.com:8104/test",
                         username + "Platform4FriendlyName", new Certificate(), new HashMap<>()));
 
                 set.add(new OwnedPlatformDetails(username + "Platform-5",

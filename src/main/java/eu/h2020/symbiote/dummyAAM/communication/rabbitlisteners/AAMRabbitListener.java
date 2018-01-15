@@ -207,21 +207,25 @@ AAMRabbitListener {
             }
         } else if (request.getOperationType() == FederationRuleManagementRequest.OperationType.READ) {
             if (request.getFederationRuleId().isEmpty()) {
-                String federationRuleId = "exampleFedId";
+                String federationRuleId1 = "exampleFedId1";
+                String federationRuleId2 = "exampleFedId2";
                 Set<String> platforms = new HashSet<>();
                 platforms.add("FedPlatform1");
                 platforms.add("FedPlatform2");
-                FederationRule federationRule = new FederationRule(federationRuleId,
+                FederationRule federationRule1 = new FederationRule(federationRuleId1,
                         platforms);
-                response.put(federationRuleId, federationRule);
+                FederationRule federationRule2 = new FederationRule(federationRuleId2,
+                        platforms);
+                response.put(federationRuleId1, federationRule1);
+                response.put(federationRuleId2, federationRule2);
                 return response;
             } else
                 return null;
         } else if (request.getOperationType() == FederationRuleManagementRequest.OperationType.DELETE) {
-            if (request.getFederationRuleId().equals("exampleFedId")) {
-                FederationRule federationRule = new FederationRule("exampleFedId",
+            if (request.getFederationRuleId().equals("exampleFedId1")) {
+                FederationRule federationRule = new FederationRule("exampleFedId1",
                         new HashSet<>());
-                response.put("exampleFedId", federationRule);
+                response.put("exampleFedId1", federationRule);
                 return response;
             } else
                 return null;

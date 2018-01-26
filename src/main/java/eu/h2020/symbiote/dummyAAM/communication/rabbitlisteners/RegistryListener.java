@@ -59,6 +59,35 @@ public class RegistryListener {
 
 
     @RabbitListener(bindings = @QueueBinding(
+            value = @Queue(value = "registryPlatformModificationRequest", durable = "${rabbit.exchange.platform.durable}",
+                    autoDelete = "${rabbit.exchange.platform.autodelete}", exclusive = "false"),
+            exchange = @Exchange(value = "${rabbit.exchange.platform.name}", ignoreDeclarationExceptions = "true",
+                    durable = "${rabbit.exchange.platform.durable}", autoDelete  = "${rabbit.exchange.platform.autodelete}",
+                    internal = "${rabbit.exchange.platform.internal}", type = "${rabbit.exchange.platform.type}"),
+            key = "${rabbit.routingKey.platform.modificationRequested}")
+    )
+    public PlatformRegistryResponse platformModificationRequest(Platform platform) {
+
+        log.info("platformModificationRequest: "+ ReflectionToStringBuilder.toString(platform));
+
+        PlatformRegistryResponse response = new PlatformRegistryResponse();
+
+        if (platform.getName().equals("reg400") ||
+                platform.getName().equals("reg401")) {
+            response.setStatus(400);
+            response.setMessage("Status 400");
+        }
+        else if (platform.getName().equals("reg500")) {
+            response.setStatus(500);
+            response.setMessage("Status 500");
+        }
+        else
+            response.setStatus(200);
+
+        return response;
+    }
+
+    @RabbitListener(bindings = @QueueBinding(
             value = @Queue(value = "registryGetPlatformDetailsRequest", durable = "${rabbit.exchange.platform.durable}",
                     autoDelete = "${rabbit.exchange.platform.autodelete}", exclusive = "false"),
             exchange = @Exchange(value = "${rabbit.exchange.platform.name}", ignoreDeclarationExceptions = "true",
@@ -81,7 +110,7 @@ public class RegistryListener {
 
         PlatformRegistryResponse response = new PlatformRegistryResponse();
 
-//        if (platform.getId().equals("validPlatformOwner2Platform1")) {
+//        if (platform.getId().equals("validPO2Platform1")) {
 //            response.setStatus(400);
 //            return response;
 //        }
@@ -93,7 +122,7 @@ public class RegistryListener {
         description.add(platformId + "Comment");
         InterworkingService service = new InterworkingService();
         service.setInformationModelId("model2_id");
-        service.setUrl(platformId + ".com/");
+        service.setUrl("https://" + platformId.toLowerCase() + ".com/");
         interworkingServices.add(service);
 
         Platform platform = new Platform();
@@ -102,7 +131,7 @@ public class RegistryListener {
         platform.setDescription(description);
         platform.setInterworkingServices(interworkingServices);
 
-        if (platform.getId().equals("validPlatformOwner2Platform1"))
+        if (platform.getId().equals("validPO2Platform1"))
             platform.setEnabler(true);
         else
             platform.setEnabler(false);
@@ -127,7 +156,7 @@ public class RegistryListener {
         log.info("platformRemovalRequest: "+ ReflectionToStringBuilder.toString(platform));
 
         PlatformRegistryResponse response = new PlatformRegistryResponse();
-        if (platform.getId().equals("validPlatformOwner2Platform2")) {
+        if (platform.getId().equals("validPO2Platform2")) {
             response.setStatus(400);
             response.setMessage("Take care of your resources first!");
         }
@@ -172,7 +201,7 @@ public class RegistryListener {
         InformationModel model2 = new InformationModel();
         model2.setId("model2_id");
         model2.setName("Model2_name");
-        model2.setOwner("validPlatformOwner2");
+        model2.setOwner("validPO2");
         model2.setUri("model2_uri");
         model2.setRdf("model2_rdf");
         model2.setRdfFormat(RDFFormat.N3);
@@ -180,7 +209,7 @@ public class RegistryListener {
         InformationModel model3 = new InformationModel();
         model3.setId("model3_id");
         model3.setName("a_name");
-        model3.setOwner("validPlatformOwner2");
+        model3.setOwner("validPO2");
         model3.setUri("model3_uri");
         model3.setRdf("model3_rdf");
         model3.setRdfFormat(RDFFormat.JSONLD);
@@ -196,7 +225,7 @@ public class RegistryListener {
         InformationModel model5 = new InformationModel();
         model5.setId("model5-id");
         model5.setName("5-name");
-        model5.setOwner("validPlatformOwner2");
+        model5.setOwner("validPO2");
         model5.setUri("model5_uri");
         model5.setRdf("model5_rdf");
         model5.setRdfFormat(RDFFormat.N3);

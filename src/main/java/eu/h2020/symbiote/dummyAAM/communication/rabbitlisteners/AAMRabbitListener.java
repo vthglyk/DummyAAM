@@ -22,10 +22,7 @@ import java.security.*;
 import java.util.*;
 
 @Component
-public class
-
-
-AAMRabbitListener {
+public class AAMRabbitListener {
     private static Log log = LogFactory.getLog(AAMRabbitListener.class);
 
     public AAMRabbitListener() {
@@ -62,10 +59,21 @@ AAMRabbitListener {
             } else if (platformManagementRequest.getPlatformInstanceId().equals("error")) {
                 return new PlatformManagementResponse(null, ManagementStatus.ERROR);
             }
+        } else if (platformManagementRequest.getOperationType() == OperationType.UPDATE) {
+            log.info("OperationType.UPDATE");
+            if (!platformManagementRequest.getPlatformInstanceId().equals("reg401") &&
+                    !platformManagementRequest.getPlatformInstanceId().equals("validPO2Platform1")) {
+                log.info("UPDATE was accepted");
+                return new PlatformManagementResponse(platformManagementRequest.getPlatformInstanceId(), ManagementStatus.OK);
+
+            } else {
+                log.info("UPDATE was rejected");
+                return new PlatformManagementResponse(null, ManagementStatus.ERROR);
+            }
         } else if (platformManagementRequest.getOperationType() == OperationType.DELETE) {
             log.info("OperationType.DELETE");
             if (!platformManagementRequest.getPlatformInstanceId().equals("reg401") &&
-                    !platformManagementRequest.getPlatformInstanceId().equals("validPlatformOwner2Platform1")) {
+                    !platformManagementRequest.getPlatformInstanceId().equals("validPO2Platform1")) {
                 log.info("DELETE was accepted");
                 return new PlatformManagementResponse(platformManagementRequest.getPlatformInstanceId(), ManagementStatus.OK);
 
@@ -99,7 +107,7 @@ AAMRabbitListener {
                 return set;
             }
 
-            if (username.contains("validPlatformOwner")) {
+            if (username.contains("validPO")) {
 
                 OwnedPlatformDetails details = new OwnedPlatformDetails(username + "Platform1",
                         "http://" + username + "Platform1.com",
@@ -108,7 +116,7 @@ AAMRabbitListener {
                 set.add(details);
             }
 
-            if (username.equals("validPlatformOwner2")) {
+            if (username.equals("validPO2")) {
                 set.add(new OwnedPlatformDetails(username + "Platform2",
                         "http://" + username + "Platform2.com:8102",
                         username + "Platform2FriendlyName", new Certificate(), new HashMap<>()));
@@ -165,19 +173,20 @@ AAMRabbitListener {
 
         log.info("getUserDetails: "+ ReflectionToStringBuilder.toString(userManagementRequest));
 
-        if (userManagementRequest.getUserCredentials().getUsername().equals("valid"))
+        String username = userManagementRequest.getUserCredentials().getUsername();
+        if (username.equals("valid"))
             return new UserDetailsResponse(HttpStatus.OK, new UserDetails());
-        if (userManagementRequest.getUserCredentials().getUsername().equals("validPlatformOwner"))
-            return new UserDetailsResponse(HttpStatus.OK, new UserDetails(new Credentials("validPlatformOwner", ""),
-                    "", "", UserRole.PLATFORM_OWNER, new HashMap<>(), new HashMap<>()));
-        if (userManagementRequest.getUserCredentials().getUsername().equals("validPlatformOwner2"))
-            return new UserDetailsResponse(HttpStatus.OK, new UserDetails(new Credentials("validPlatformOwner2", ""),
-                    "", "", UserRole.PLATFORM_OWNER, new HashMap<>(), new HashMap<>()));
-        else if (userManagementRequest.getUserCredentials().getUsername().equals("wrongUsername"))
+        if (username.equals("validPO"))
+            return new UserDetailsResponse(HttpStatus.OK, new UserDetails(new Credentials("validPO", ""),
+                    "", username + "email", UserRole.PLATFORM_OWNER, new HashMap<>(), new HashMap<>()));
+        if (username.equals("validPO2"))
+            return new UserDetailsResponse(HttpStatus.OK, new UserDetails(new Credentials("validPO2", ""),
+                    "", username + "email", UserRole.PLATFORM_OWNER, new HashMap<>(), new HashMap<>()));
+        else if (username.equals("wrongUsername"))
             return new UserDetailsResponse(HttpStatus.BAD_REQUEST, new UserDetails());
-        else if (userManagementRequest.getUserCredentials().getUsername().equals("wrongUserPassword"))
+        else if (username.equals("wrongUserPassword"))
             return new UserDetailsResponse(HttpStatus.UNAUTHORIZED, new UserDetails());
-        else if (userManagementRequest.getUserCredentials().getUsername().equals("wrongAdminPassword"))
+        else if (username.equals("wrongAdminPassword"))
             return new UserDetailsResponse(HttpStatus.FORBIDDEN, new UserDetails());
 
         return null;

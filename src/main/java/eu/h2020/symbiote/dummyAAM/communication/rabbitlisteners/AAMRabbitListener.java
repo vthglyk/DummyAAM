@@ -151,14 +151,27 @@ public class AAMRabbitListener {
     public ManagementStatus userManagementRequest(UserManagementRequest userManagementRequest) {
 
         log.info("userManagementRequest: "+ ReflectionToStringBuilder.toString(userManagementRequest));
-        log.info("UserDetails: " + ReflectionToStringBuilder.toString(userManagementRequest.getUserCredentials()));
+        log.info("UserDetails: " + ReflectionToStringBuilder.toString(userManagementRequest.getUserDetails()));
 
-        if (userManagementRequest.getUserCredentials().getUsername().equals("valid"))
-            return ManagementStatus.OK;
-        else if (userManagementRequest.getUserCredentials().getUsername().equals("exists"))
-            return ManagementStatus.USERNAME_EXISTS;
-        else
-            return ManagementStatus.ERROR;
+        if (userManagementRequest.getOperationType() == OperationType.CREATE) {
+            if (userManagementRequest.getUserCredentials().getUsername().equals("valid"))
+                return ManagementStatus.OK;
+            else if (userManagementRequest.getUserCredentials().getUsername().equals("exists"))
+                return ManagementStatus.USERNAME_EXISTS;
+            else
+                return ManagementStatus.ERROR;
+        } else if (userManagementRequest.getOperationType() == OperationType.UPDATE) {
+            if (userManagementRequest.getUserDetails().getRecoveryMail().equals("c@c.com"))
+                return null;
+            if (userManagementRequest.getUserDetails().getCredentials().getPassword().equals("cccc"))
+                return null;
+            else {
+                return ManagementStatus.OK;
+            }
+        }
+
+        return ManagementStatus.ERROR;
+
     }
 
     @RabbitListener(bindings = @QueueBinding(

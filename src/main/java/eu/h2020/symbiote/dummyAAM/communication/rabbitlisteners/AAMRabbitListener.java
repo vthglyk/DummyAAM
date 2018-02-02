@@ -228,21 +228,40 @@ public class AAMRabbitListener {
                 return response;
             }
         } else if (request.getOperationType() == FederationRuleManagementRequest.OperationType.READ) {
+            String federationRuleId1 = "exampleFedId1";
+            String federationRuleId2 = "exampleFedId2";
+            String federationRuleId3 = "exampleFedId3";
+
+            Set<String> platforms = new HashSet<>();
+            platforms.add("FedPlatform1");
+            platforms.add("FedPlatform2");
+            FederationRule federationRule1 = new FederationRule(federationRuleId1,
+                    platforms);
+            FederationRule federationRule2 = new FederationRule(federationRuleId2,
+                    platforms);
+
+            Set<String> platforms2 = new HashSet<>();
+            platforms2.add("FedPlatform1");
+            platforms2.add("FedPlatform2");
+            platforms2.add("validPO2Platform4");
+            FederationRule federationRule3 = new FederationRule(federationRuleId3,
+                    platforms2);
+
+            Map<String, FederationRule> federationRuleMap = new HashMap<>();
+            federationRuleMap.put(federationRuleId1, federationRule1);
+            federationRuleMap.put(federationRuleId1, federationRule1);
+            federationRuleMap.put(federationRuleId1, federationRule1);
+
             if (request.getFederationRuleId().isEmpty()) {
-                String federationRuleId1 = "exampleFedId1";
-                String federationRuleId2 = "exampleFedId2";
-                Set<String> platforms = new HashSet<>();
-                platforms.add("FedPlatform1");
-                platforms.add("FedPlatform2");
-                FederationRule federationRule1 = new FederationRule(federationRuleId1,
-                        platforms);
-                FederationRule federationRule2 = new FederationRule(federationRuleId2,
-                        platforms);
                 response.put(federationRuleId1, federationRule1);
                 response.put(federationRuleId2, federationRule2);
+                response.put(federationRuleId3, federationRule3);
                 return response;
+            } else if (federationRuleMap.containsKey(request.getFederationRuleId())) {
+                response.put(request.getFederationRuleId(), federationRuleMap.get(request.getFederationRuleId()));
             } else
                 return null;
+
         } else if (request.getOperationType() == FederationRuleManagementRequest.OperationType.DELETE) {
             if (request.getFederationRuleId().equals("exampleFedId1")) {
                 FederationRule federationRule = new FederationRule("exampleFedId1",

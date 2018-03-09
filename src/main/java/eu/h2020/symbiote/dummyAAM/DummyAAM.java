@@ -1,6 +1,5 @@
 package eu.h2020.symbiote.dummyAAM;
 
-import org.springframework.amqp.rabbit.AsyncRabbitTemplate;
 import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory;
 import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
@@ -75,18 +74,6 @@ public class DummyAAM {
 		RabbitTemplate rabbitTemplate = new RabbitTemplate(connectionFactory);
 		rabbitTemplate.setMessageConverter(jackson2JsonMessageConverter);
 		return rabbitTemplate;
-	}
-
-	@Bean
-	public AsyncRabbitTemplate asyncRabbitTemplate(RabbitTemplate rabbitTemplate) {
-
-		/**
-		 * The following AsyncRabbitTemplate constructor uses "Direct replyTo" for replies.
-		 */
-		AsyncRabbitTemplate asyncRabbitTemplate = new AsyncRabbitTemplate(rabbitTemplate);
-		asyncRabbitTemplate.setReceiveTimeout(10000);
-
-		return asyncRabbitTemplate;
 	}
 
 }

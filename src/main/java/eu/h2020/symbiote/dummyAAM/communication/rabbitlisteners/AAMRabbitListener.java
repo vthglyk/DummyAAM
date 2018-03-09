@@ -5,11 +5,9 @@ import eu.h2020.symbiote.security.commons.enums.ManagementStatus;
 import eu.h2020.symbiote.security.commons.enums.OperationType;
 import eu.h2020.symbiote.security.commons.enums.UserRole;
 import eu.h2020.symbiote.security.communication.payloads.*;
-
 import org.apache.commons.lang3.builder.ReflectionToStringBuilder;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 import org.springframework.amqp.rabbit.annotation.Exchange;
 import org.springframework.amqp.rabbit.annotation.Queue;
 import org.springframework.amqp.rabbit.annotation.QueueBinding;
@@ -17,9 +15,10 @@ import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 
-
-import java.security.*;
-import java.util.*;
+import java.security.Security;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
 
 @Component
 public class AAMRabbitListener {
@@ -88,20 +87,20 @@ public class AAMRabbitListener {
     }
 
     @RabbitListener(bindings = @QueueBinding(
-            value = @Queue(value = "aamOwnedPlatformDetailsRequest", durable = "${rabbit.exchange.aam.durable}",
+            value = @Queue(value = "aamOwnedServiceDetailsRequest", durable = "${rabbit.exchange.aam.durable}",
                     autoDelete = "${rabbit.exchange.aam.autodelete}", exclusive = "false"),
             exchange = @Exchange(value = "${rabbit.exchange.aam.name}", ignoreDeclarationExceptions = "true",
                     durable = "${rabbit.exchange.aam.durable}", autoDelete  = "${rabbit.exchange.aam.autodelete}",
                     internal = "${rabbit.exchange.aam.internal}", type = "${rabbit.exchange.aam.type}"),
-            key = "${rabbit.routingKey.ownedplatformdetails.request}")
+            key = "${rabbit.queue.ownedservices.request}")
     )
-    public Set<OwnedPlatformDetails> ownedPlatformDetailsRequest(UserManagementRequest request) {
+    public Set<OwnedService> ownedServiceDetailsRequest(UserManagementRequest request) {
 
-        log.info("ownedPlatformDetailsRequest, request: " + ReflectionToStringBuilder.toString(request));
+        log.info("ownedServiceDetailsRequest, request: " + ReflectionToStringBuilder.toString(request));
 
         if(request != null) {
             String username = request.getUserCredentials().getUsername();
-            Set<OwnedPlatformDetails> set = new HashSet<>();
+            Set<OwnedService> set = new HashSet<>();
 
             if (username.equals("valid")) {
                 return set;
@@ -109,29 +108,51 @@ public class AAMRabbitListener {
 
             if (username.contains("validPO")) {
 
-                OwnedPlatformDetails details = new OwnedPlatformDetails(username + "Platform1",
+                OwnedService details = new OwnedService(username + "Platform1",
+                        username + "PlatformFriendlyName",OwnedService.ServiceType.PLATFORM,
                         "http://" + username + "Platform1.com",
-                        username + "PlatformFriendlyName", new Certificate(), new HashMap<>());
+                        null, false, null,
+                         new Certificate(), new HashMap<>());
 
                 set.add(details);
             }
 
             if (username.equals("validPO2")) {
-                set.add(new OwnedPlatformDetails(username + "Platform2",
+                set.add(new OwnedService(username + "Platform2",
+                        username + "Platform2FriendlyName", OwnedService.ServiceType.PLATFORM,
                         "http://" + username + "Platform2.com:8102",
-                        username + "Platform2FriendlyName", new Certificate(), new HashMap<>()));
+                        null, false, null,
+                        new Certificate(), new HashMap<>()));
 
-                set.add(new OwnedPlatformDetails(username + "Platform3",
+                set.add(new OwnedService(username + "Platform3",
+                        username + "Platform3FriendlyName", OwnedService.ServiceType.PLATFORM,
                         "http://" + username + "Platform3.com:8103/",
-                        username + "Platform3FriendlyName", new Certificate(), new HashMap<>()));
+                        null, false, null,
+                        new Certificate(), new HashMap<>()));
 
-                set.add(new OwnedPlatformDetails(username + "Platform4",
+                set.add(new OwnedService(username + "Platform4",
+                        username + "Platform4FriendlyName", OwnedService.ServiceType.PLATFORM,
                         "http://" + username + "Platform4.com:8104/test",
-                        username + "Platform4FriendlyName", new Certificate(), new HashMap<>()));
+                        null, false, null,
+                        new Certificate(), new HashMap<>()));
 
-                set.add(new OwnedPlatformDetails(username + "Platform-5",
+                set.add(new OwnedService(username + "Platform-5",
+                        username + "Platform-5FriendlyName", OwnedService.ServiceType.PLATFORM,
                         "http://" + username + "Platform-5.com",
-                        username + "Platform-5FriendlyName", new Certificate(), new HashMap<>()));
+                        null, false, null,
+                        new Certificate(), new HashMap<>()));
+
+                set.add(new OwnedService(username + "SSP1",
+                        username + "SSP1FriendlyName", OwnedService.ServiceType.SMART_SPACE,
+                        null, "http://" + username + "externalSSP1.com",
+                        false, "http://" + username + "localSSP1.com",
+                        new Certificate(), new HashMap<>()));
+
+                set.add(new OwnedService(username + "SSP2",
+                        username + "SSP2FriendlyName", OwnedService.ServiceType.SMART_SPACE,
+                        null, "http://" + username + "externalSSP2.com",
+                        true, "http://" + username + "localSSP2.com",
+                        new Certificate(), new HashMap<>()));
             }
             return set;
 
@@ -191,10 +212,10 @@ public class AAMRabbitListener {
             return new UserDetailsResponse(HttpStatus.OK, new UserDetails());
         if (username.equals("validPO"))
             return new UserDetailsResponse(HttpStatus.OK, new UserDetails(new Credentials("validPO", ""),
-                    "", username + "email", UserRole.PLATFORM_OWNER, new HashMap<>(), new HashMap<>()));
+                    username + "email", UserRole.SERVICE_OWNER, new HashMap<>(), new HashMap<>()));
         if (username.equals("validPO2"))
             return new UserDetailsResponse(HttpStatus.OK, new UserDetails(new Credentials("validPO2", ""),
-                    "", username + "email", UserRole.PLATFORM_OWNER, new HashMap<>(), new HashMap<>()));
+                    username + "email", UserRole.SERVICE_OWNER, new HashMap<>(), new HashMap<>()));
         else if (username.equals("wrongUsername"))
             return new UserDetailsResponse(HttpStatus.BAD_REQUEST, new UserDetails());
         else if (username.equals("wrongUserPassword"))

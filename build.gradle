@@ -40,9 +40,6 @@ repositories {
     maven { 
         url "https://jitpack.io" 
     }
-    maven {
-        url 'https://repo.spring.io/libs-snapshot'
-    }
 }
 
 configurations.all {
@@ -63,16 +60,15 @@ dependencies {
             3) project dependency requires changes in settings.gradle file in this project
             4) never commit build.gradle which has project dependencies active as it will break CI builds
     */
-    compile('com.github.symbiote-h2020:SymbIoTeLibraries:4.+') { changing = true }
-    compile('com.github.symbiote-h2020:SymbIoTeSecurity:23.+') { changing = true }
+    compile('com.github.symbiote-h2020:SymbIoTeLibraries:c6c9243c1ac5939e278cb91b3ccd48e701f356b2') { changing = true }
 
     // Spring
     compile('org.springframework.boot:spring-boot-starter-amqp')
     compile('org.springframework.boot:spring-boot-starter-data-rest')
     compile('org.springframework.boot:spring-boot-starter-web')
     compile('org.springframework.boot:spring-boot-starter-data-mongodb')
-    compile('org.springframework.amqp:spring-amqp:2.0.0.M1')
-    compile('org.springframework.amqp:spring-rabbit:2.0.0.M1')
+    compile('org.springframework.amqp:spring-amqp')
+    compile('org.springframework.amqp:spring-rabbit')
 
     // Other
     compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.6'

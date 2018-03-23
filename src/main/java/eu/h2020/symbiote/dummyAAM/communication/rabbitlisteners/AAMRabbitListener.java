@@ -4,6 +4,7 @@ import eu.h2020.symbiote.security.commons.Certificate;
 import eu.h2020.symbiote.security.commons.enums.ManagementStatus;
 import eu.h2020.symbiote.security.commons.enums.OperationType;
 import eu.h2020.symbiote.security.commons.enums.UserRole;
+import eu.h2020.symbiote.security.commons.exceptions.custom.InvalidArgumentsException;
 import eu.h2020.symbiote.security.communication.payloads.*;
 import org.apache.commons.lang3.builder.ReflectionToStringBuilder;
 import org.apache.commons.logging.Log;
@@ -84,6 +85,81 @@ public class AAMRabbitListener {
 
 
         return new PlatformManagementResponse(null, null);
+    }
+
+    @RabbitListener(bindings = @QueueBinding(
+            value = @Queue(value = "aamSSPManagementRequest", durable = "${rabbit.exchange.aam.durable}",
+                    autoDelete = "${rabbit.exchange.aam.autodelete}", exclusive = "false"),
+            exchange = @Exchange(value = "${rabbit.exchange.aam.name}", ignoreDeclarationExceptions = "true",
+                    durable = "${rabbit.exchange.aam.durable}", autoDelete  = "${rabbit.exchange.aam.autodelete}",
+                    internal = "${rabbit.exchange.aam.internal}", type = "${rabbit.exchange.aam.type}"),
+            key = "${rabbit.routingKey.manage.smartspace.request}")
+    )
+    public SmartSpaceManagementResponse sspManagementRequest(SmartSpaceManagementRequest request) {
+
+        log.info("request: "+ ReflectionToStringBuilder.toString(request));
+
+        if (request.getInstanceId().isEmpty()) {
+            try {
+                log.info(ReflectionToStringBuilder.toString(request));
+                request = new SmartSpaceManagementRequest(
+                        request.getAamOwnerCredentials(),
+                        request.getServiceOwnerCredentials(),
+                        request.getExternalAddress(),
+                        request.getSiteLocalAddress(),
+                        request.getInstanceFriendlyName(),
+                        request.getOperationType(),
+                        "EmptyId",
+                        request.isExposingSiteLocalAddress()
+                );
+                log.info(ReflectionToStringBuilder.toString(request));
+
+            } catch (InvalidArgumentsException e) {
+                log.info("Invalid Arguments", e);
+            }
+        }
+
+
+        if (request.getServiceOwnerCredentials() == null ||
+                (request.getServiceOwnerCredentials().getUsername() == null ||
+                        request.getServiceOwnerCredentials().getPassword() == null))
+            return new SmartSpaceManagementResponse(null, ManagementStatus.ERROR);
+        else if (request.getOperationType() == OperationType.CREATE) {
+            log.info("OperationType.CREATE");
+
+            if (!request.getInstanceId().equals("exists") &&
+                    !request.getInstanceId().equals("error")) {
+                return new SmartSpaceManagementResponse(request.getInstanceId(), ManagementStatus.OK);
+            } else if (request.getInstanceId().equals("exists")) {
+                return new SmartSpaceManagementResponse(null, ManagementStatus.PLATFORM_EXISTS);
+            } else if (request.getInstanceId().equals("error")) {
+                return new SmartSpaceManagementResponse(null, ManagementStatus.ERROR);
+            }
+        } else if (request.getOperationType() == OperationType.UPDATE) {
+            log.info("OperationType.UPDATE");
+            if (!request.getInstanceId().equals("reg401") &&
+                    !request.getInstanceId().equals("validPO2Platform1")) {
+                log.info("UPDATE was accepted");
+                return new SmartSpaceManagementResponse(request.getInstanceId(), ManagementStatus.OK);
+
+            } else {
+                log.info("UPDATE was rejected");
+                return new SmartSpaceManagementResponse(null, ManagementStatus.ERROR);
+            }
+        } else if (request.getOperationType() == OperationType.DELETE) {
+            log.info("OperationType.DELETE");
+            if (!request.getInstanceId().equals("reg401") &&
+                    !request.getInstanceId().equals("validPO2SSP1")) {
+                log.info("DELETE was accepted");
+                return new SmartSpaceManagementResponse(request.getInstanceId(), ManagementStatus.OK);
+
+            } else {
+                log.info("DELETE was rejected");
+                return new SmartSpaceManagementResponse(null, ManagementStatus.ERROR);
+            }
+        }
+
+        return new SmartSpaceManagementResponse(null, null);
     }
 
     @RabbitListener(bindings = @QueueBinding(

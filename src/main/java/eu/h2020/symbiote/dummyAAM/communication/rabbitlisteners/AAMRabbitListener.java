@@ -20,6 +20,8 @@ import java.security.Security;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Component
 public class AAMRabbitListener {
@@ -95,9 +97,22 @@ public class AAMRabbitListener {
                     internal = "${rabbit.exchange.aam.internal}", type = "${rabbit.exchange.aam.type}"),
             key = "${rabbit.routingKey.manage.smartspace.request}")
     )
-    public SmartSpaceManagementResponse sspManagementRequest(SmartSpaceManagementRequest request) {
+    public Object sspManagementRequest(SmartSpaceManagementRequest request) {
 
         log.info("request: "+ ReflectionToStringBuilder.toString(request));
+
+        if (request.getInstanceId().equals("error"))
+            return new ErrorResponseContainer("There is an error",
+                    HttpStatus.INTERNAL_SERVER_ERROR.value());
+
+        if (!request.getExternalAddress().isEmpty()) {
+            Pattern p = Pattern.compile("^SSP_[//w-]+");   // the pattern to search for
+            Matcher m = p.matcher(request.getInstanceId());
+
+            if (!m.find())
+                return new ErrorResponseContainer("Smart space identifier must start with 'SSP_' prefix.",
+                        HttpStatus.BAD_REQUEST.value());
+        }
 
         if (request.getInstanceId().isEmpty()) {
             try {

@@ -168,7 +168,7 @@ public class AAMRabbitListener {
             exchange = @Exchange(value = "${rabbit.exchange.aam.name}", ignoreDeclarationExceptions = "true",
                     durable = "${rabbit.exchange.aam.durable}", autoDelete  = "${rabbit.exchange.aam.autodelete}",
                     internal = "${rabbit.exchange.aam.internal}", type = "${rabbit.exchange.aam.type}"),
-            key = "${rabbit.queue.ownedservices.request}")
+            key = "${rabbit.routingKey.ownedservices.request}")
     )
     public Set<OwnedService> ownedServiceDetailsRequest(UserManagementRequest request) {
 

@@ -301,6 +301,9 @@ public class AAMRabbitListener {
         String username = userManagementRequest.getUserCredentials().getUsername();
         if (username.equals("valid"))
             return new UserDetailsResponse(HttpStatus.OK, new UserDetails());
+        if (username.equals("validUser"))
+            return new UserDetailsResponse(HttpStatus.OK, new UserDetails(new Credentials("validUSER", ""),
+                    username + "email", UserRole.USER, new HashMap<>(), new HashMap<>()));
         if (username.equals("validPO"))
             return new UserDetailsResponse(HttpStatus.OK, new UserDetails(new Credentials("validPO", ""),
                     username + "email", UserRole.SERVICE_OWNER, new HashMap<>(), new HashMap<>()));

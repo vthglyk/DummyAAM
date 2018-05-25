@@ -17,8 +17,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 
 import java.security.Security;
+import java.security.cert.CertificateException;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -26,6 +28,17 @@ import java.util.regex.Pattern;
 @Component
 public class AAMRabbitListener {
     private static Log log = LogFactory.getLog(AAMRabbitListener.class);
+    private static final String exampleCertificate = "-----BEGIN CERTIFICATE-----" +
+            "\\nMIIBxzCCAW6gAwIBAgIBATAKBggqhkjOPQQDAjCBrDErMCkGCSqGSIb3DQEJARYc" +
+            "\\nbWlrb2xhai5kb2Jza2lAbWFuLnBvem5hbi5wbDEVMBMGA1UEBxMMV2llbGtvcG9s" +
+            "\\nc2thMQ8wDQYDVQQIEwZQb3puYW4xCzAJBgNVBAYTAlBMMR0wGwYDVQQLExRTeW1i" +
+            "\\naW90ZSBEZXZlbG9wbWVudDENMAsGA1UEChMEUFNOQzEaMBgGA1UEAwwRU3ltYklv" +
+            "\\nVGVfQ29yZV9BQU0wHhcNMTcxMjExMTMwMjIxWhcNMTgxMjExMTMwMjIxWjAZMRcw\\" +
+            "nFQYDVQQDEw5BSVQtb3BlblV3ZWRhdDBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IA" +
+            "\\nBHOlakZd3SnpfAgCVCUDXXKINnaS4gNYXJMYT3rO6GS2pRSwkSzUaIINJidMXqHi" +
+            "\\npUsg9tUe9hfhTWggtwUuA4ejEzARMA8GA1UdEwQIMAYBAf8CAQAwCgYIKoZIzj0E" +
+            "\\nAwIDRwAwRAIgeXzflPYqF8d65/BGGK5kdA0kOZFgtZS0Tq/dHAxQpDYCIBJWsarZ" +
+            "\\nRWHgqSlzLLj6wyGFNYMTWXFIHXo2cnFRAfBv\\n-----END CERTIFICATE-----\\n";
 
     public AAMRabbitListener() {
         Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
@@ -208,7 +221,17 @@ public class AAMRabbitListener {
                 set.add(details);
             }
 
+            if (username.equals("icom")) {
+                set.add(new OwnedService("icom-platform",
+                        "icom-platform", OwnedService.ServiceType.PLATFORM,
+                        "https://intracom.symbiote-h2020.eu/",
+                        null, false, null,
+                        new Certificate(), new HashMap<>()));
+            }
+
             if (username.equals("validPO2")) {
+
+
                 set.add(new OwnedService(username + "Platform2",
                         username + "Platform2FriendlyName", OwnedService.ServiceType.PLATFORM,
                         "http://" + username + "Platform2.com:8102",
@@ -264,26 +287,84 @@ public class AAMRabbitListener {
 
         log.info("userManagementRequest: "+ ReflectionToStringBuilder.toString(userManagementRequest));
         log.info("UserDetails: " + ReflectionToStringBuilder.toString(userManagementRequest.getUserDetails()));
+        OperationType type = userManagementRequest.getOperationType();
+        String username = userManagementRequest.getUserCredentials().getUsername();
+        String password = userManagementRequest.getUserCredentials().getPassword();
+        String email = userManagementRequest.getUserDetails().getRecoveryMail();
+        Map<String, Certificate> clients = userManagementRequest.getUserDetails().getClients();
 
-        if (userManagementRequest.getOperationType() == OperationType.CREATE) {
-            if (userManagementRequest.getUserCredentials().getUsername().equals("valid"))
+        if (type == OperationType.CREATE) {
+            if (username.equals("valid"))
                 return ManagementStatus.OK;
-            else if (userManagementRequest.getUserCredentials().getUsername().equals("exists"))
+            if (username.equals("exists"))
                 return ManagementStatus.USERNAME_EXISTS;
             else
                 return ManagementStatus.ERROR;
-        } else if (userManagementRequest.getOperationType() == OperationType.UPDATE) {
-            if (userManagementRequest.getUserDetails().getRecoveryMail().equals("c@c.com"))
+        } else if (type == OperationType.UPDATE) {
+            log.info("Got an UPDATE operation");
+
+            if (email.equals("c@c.com")) {
+                log.info("Wrong email");
                 return null;
-            if (userManagementRequest.getUserDetails().getCredentials().getPassword().equals("cccc"))
+            }
+            if (!clients.containsKey("client2_" + username)) {
+                log.info("Error in clients");
+                return ManagementStatus.ERROR;
+            }
+            if (password.equals("cccc")) {
+                log.info("Wrong password");
                 return null;
-            else {
+            }  else {
+                log.info("Successful update");
                 return ManagementStatus.OK;
             }
+        } else if (type == OperationType.DELETE) {
+            log.info("Got a DELETE operation");
+
+            if (username.equals("valid"))
+                return ManagementStatus.OK;
+            else
+                return ManagementStatus.ERROR;
         }
 
         return ManagementStatus.ERROR;
 
+    }
+
+    @RabbitListener(bindings = @QueueBinding(
+            value = @Queue(value = "aamRevocationRequest", durable = "${rabbit.exchange.aam.durable}",
+                    autoDelete = "${rabbit.exchange.aam.autodelete}", exclusive = "false"),
+            exchange = @Exchange(value = "${rabbit.exchange.aam.name}", ignoreDeclarationExceptions = "true",
+                    durable = "${rabbit.exchange.aam.durable}", autoDelete  = "${rabbit.exchange.aam.autodelete}",
+                    internal = "${rabbit.exchange.aam.internal}", type = "${rabbit.exchange.aam.type}"),
+            key = "${rabbit.routingKey.manage.revocation.request}")
+    )
+    public RevocationResponse revocation(RevocationRequest request) {
+
+        log.info("revocation: "+ ReflectionToStringBuilder.toString(request));
+        RevocationRequest.CredentialType type = request.getCredentialType();
+        String username = request.getCredentials().getUsername();
+        String password = request.getCredentials().getPassword();
+        String certificateCommonName = request.getCertificateCommonName();
+        log.info("username = " + username);
+        log.info("password = " + password);
+        log.info("certificateCommonName = " + certificateCommonName);
+
+        if (type == RevocationRequest.CredentialType.ADMIN &&
+                username.equals("AAMOwner") &&
+                password.equals("AAMPassword")) {
+            switch (certificateCommonName) {
+                case "icom@client4_icom":
+                    return new RevocationResponse(true, HttpStatus.OK);
+                case "icom@client3_icom":
+                    return new RevocationResponse(false, HttpStatus.OK);
+                case "icom@client2_icom":
+                    return new RevocationResponse(true, HttpStatus.BAD_REQUEST);
+                case "icom@client1_icom":
+                    return new RevocationResponse(false, HttpStatus.BAD_REQUEST);
+            }
+        }
+        return new RevocationResponse(false, HttpStatus.BAD_REQUEST);
     }
 
     @RabbitListener(bindings = @QueueBinding(
@@ -299,22 +380,45 @@ public class AAMRabbitListener {
         log.info("getUserDetails: "+ ReflectionToStringBuilder.toString(userManagementRequest));
 
         String username = userManagementRequest.getUserCredentials().getUsername();
-        if (username.equals("valid"))
-            return new UserDetailsResponse(HttpStatus.OK, new UserDetails());
+
+        Map<String, Certificate> clients = new HashMap<>();
+
+        try {
+            clients.put("client1_" + username, new Certificate("certificate1_" + username + exampleCertificate));
+            clients.put("client2_" + username, new Certificate("certificate2_" + username + exampleCertificate));
+            clients.put("client3_" + username, new Certificate("certificate3_" + username + exampleCertificate));
+            clients.put("client4_" + username, new Certificate("certificate4_" + username + exampleCertificate));
+        } catch (CertificateException e) {
+            log.warn("Exception during Certification creation", e);
+        }
+
+        if (username.equals("valid") || username.equals("valid2"))
+            return new UserDetailsResponse(HttpStatus.OK, new UserDetails(new Credentials("validUSER", ""),
+                    username + "email", UserRole.USER, new HashMap<>(), clients));
+
+        if (username.equals("icom"))
+            return new UserDetailsResponse(HttpStatus.OK, new UserDetails(new Credentials("icom", "icom"),
+                    username + "email", UserRole.SERVICE_OWNER, new HashMap<>(), clients));
+
         if (username.equals("validUser"))
             return new UserDetailsResponse(HttpStatus.OK, new UserDetails(new Credentials("validUSER", ""),
-                    username + "email", UserRole.USER, new HashMap<>(), new HashMap<>()));
+                    username + "email", UserRole.USER, new HashMap<>(), clients));
+
         if (username.equals("validPO"))
             return new UserDetailsResponse(HttpStatus.OK, new UserDetails(new Credentials("validPO", ""),
-                    username + "email", UserRole.SERVICE_OWNER, new HashMap<>(), new HashMap<>()));
+                    username + "email", UserRole.SERVICE_OWNER, new HashMap<>(), clients));
+
         if (username.equals("validPO2"))
             return new UserDetailsResponse(HttpStatus.OK, new UserDetails(new Credentials("validPO2", ""),
-                    username + "email", UserRole.SERVICE_OWNER, new HashMap<>(), new HashMap<>()));
-        else if (username.equals("wrongUsername"))
+                    username + "email", UserRole.SERVICE_OWNER, new HashMap<>(), clients));
+
+        if (username.equals("wrongUsername"))
             return new UserDetailsResponse(HttpStatus.BAD_REQUEST, new UserDetails());
-        else if (username.equals("wrongUserPassword"))
+
+        if (username.equals("wrongUserPassword"))
             return new UserDetailsResponse(HttpStatus.UNAUTHORIZED, new UserDetails());
-        else if (username.equals("wrongAdminPassword"))
+
+        if (username.equals("wrongAdminPassword"))
             return new UserDetailsResponse(HttpStatus.FORBIDDEN, new UserDetails());
 
         return null;

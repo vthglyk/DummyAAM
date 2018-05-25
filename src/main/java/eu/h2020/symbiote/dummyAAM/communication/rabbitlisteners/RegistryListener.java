@@ -115,19 +115,31 @@ public class RegistryListener {
 
         ArrayList<String> description = new ArrayList<>();
         ArrayList<InterworkingService> interworkingServices = new ArrayList<>();
-
-        description.add(platformId + "Description");
-        description.add(platformId + "Comment");
-        InterworkingService service = new InterworkingService();
-        service.setInformationModelId("model2_id");
-        service.setUrl("https://" + platformId.toLowerCase() + ".com/");
-        interworkingServices.add(service);
-
         Platform platform = new Platform();
-        platform.setId(platformId);
-        platform.setName(platformId + "Name");
-        platform.setDescription(description);
-        platform.setInterworkingServices(interworkingServices);
+        InterworkingService service = new InterworkingService();
+
+        if (platformId.equals("icom-platform")) {
+            description.add(platformId + "Description");
+            service.setInformationModelId("model2_id");
+            service.setUrl("https://intracom.symbiote-h2020.eu/");
+            interworkingServices.add(service);
+
+            platform.setId(platformId);
+            platform.setName(platformId);
+            platform.setDescription(description);
+            platform.setInterworkingServices(interworkingServices);
+        } else {
+            description.add(platformId + "Description");
+            description.add(platformId + "Comment");
+            service.setInformationModelId("model2_id");
+            service.setUrl("https://" + platformId.toLowerCase() + ".com/");
+            interworkingServices.add(service);
+
+            platform.setId(platformId);
+            platform.setName(platformId + "Name");
+            platform.setDescription(description);
+            platform.setInterworkingServices(interworkingServices);
+        }
 
         if (platform.getId().equals("validPO2Platform1"))
             platform.setEnabler(true);

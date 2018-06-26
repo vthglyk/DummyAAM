@@ -118,8 +118,8 @@ public class AAMRabbitListener {
             return new ErrorResponseContainer("There is an error",
                     HttpStatus.INTERNAL_SERVER_ERROR.value());
 
-        if (!request.getExternalAddress().isEmpty()) {
-            Pattern p = Pattern.compile("^SSP_[//w-]+");   // the pattern to search for
+        if (!request.getInstanceId().isEmpty()) {
+            Pattern p = Pattern.compile("^SSP_([\\w-])+$");   // the pattern to search for
             Matcher m = p.matcher(request.getInstanceId());
 
             if (!m.find())
@@ -264,8 +264,14 @@ public class AAMRabbitListener {
 
                 set.add(new OwnedService(username + "SSP2",
                         username + "SSP2FriendlyName", OwnedService.ServiceType.SMART_SPACE,
-                        null, "http://" + username + "externalSSP2.com",
-                        true, "http://" + username + "localSSP2.com",
+                        null, null,
+                        true, null,
+                        new Certificate(), new HashMap<>()));
+
+                set.add(new OwnedService(username + "SSP3",
+                        username + "SSP3FriendlyName", OwnedService.ServiceType.SMART_SPACE,
+                        null, "http://" + username + "externalSSP3.com",
+                        true, "http://" + username + "localSSP3.com",
                         new Certificate(), new HashMap<>()));
             }
             return set;
@@ -306,15 +312,10 @@ public class AAMRabbitListener {
             if (email.equals("c@c.com")) {
                 log.info("Wrong email");
                 return null;
-            }
-            if (!clients.containsKey("client2_" + username)) {
-                log.info("Error in clients");
-                return ManagementStatus.ERROR;
-            }
-            if (password.equals("cccc")) {
+            } else if (password.equals("cccc")) {
                 log.info("Wrong password");
                 return null;
-            }  else {
+            } else {
                 log.info("Successful update");
                 return ManagementStatus.OK;
             }
@@ -350,9 +351,9 @@ public class AAMRabbitListener {
         log.info("password = " + password);
         log.info("certificateCommonName = " + certificateCommonName);
 
-        if (type == RevocationRequest.CredentialType.ADMIN &&
-                username.equals("AAMOwner") &&
-                password.equals("AAMPassword")) {
+        if (type == RevocationRequest.CredentialType.USER &&
+                username.equals("icom") &&
+                password.equals("icom")) {
             switch (certificateCommonName) {
                 case "icom@client4_icom":
                     return new RevocationResponse(true, HttpStatus.OK);

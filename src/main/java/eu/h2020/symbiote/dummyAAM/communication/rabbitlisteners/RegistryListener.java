@@ -3,6 +3,7 @@ package eu.h2020.symbiote.dummyAAM.communication.rabbitlisteners;
 import eu.h2020.symbiote.core.cci.InformationModelRequest;
 import eu.h2020.symbiote.core.cci.InformationModelResponse;
 import eu.h2020.symbiote.core.cci.PlatformRegistryResponse;
+import eu.h2020.symbiote.core.cci.SspRegistryResponse;
 import eu.h2020.symbiote.core.internal.ClearDataRequest;
 import eu.h2020.symbiote.core.internal.ClearDataResponse;
 import eu.h2020.symbiote.core.internal.InformationModelListResponse;
@@ -10,6 +11,7 @@ import eu.h2020.symbiote.core.internal.RDFFormat;
 import eu.h2020.symbiote.model.mim.InformationModel;
 import eu.h2020.symbiote.model.mim.InterworkingService;
 import eu.h2020.symbiote.model.mim.Platform;
+import eu.h2020.symbiote.model.mim.SmartSpace;
 import org.apache.commons.lang3.builder.ReflectionToStringBuilder;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -167,6 +169,135 @@ public class RegistryListener {
 
         PlatformRegistryResponse response = new PlatformRegistryResponse();
         if (platform.getId().equals("validPO2Platform2")) {
+            response.setStatus(400);
+            response.setMessage("Take care of your resources first!");
+        }
+        else {
+            response.setStatus(200);
+        }
+        return response;
+    }
+
+    @RabbitListener(bindings = @QueueBinding(
+            value = @Queue(value = "registrySspRegistrationRequest", durable = "${rabbit.exchange.ssp.durable}",
+                    autoDelete = "${rabbit.exchange.ssp.autodelete}", exclusive = "false"),
+            exchange = @Exchange(value = "${rabbit.exchange.ssp.name}", ignoreDeclarationExceptions = "true",
+                    durable = "${rabbit.exchange.platform.durable}", autoDelete  = "${rabbit.exchange.ssp.autodelete}",
+                    internal = "${rabbit.exchange.ssp.internal}", type = "${rabbit.exchange.ssp.type}"),
+            key = "${rabbit.routingKey.ssp.creationRequested}")
+    )
+    public SspRegistryResponse sspRegistrationRequest(SmartSpace smartSpace) {
+
+        log.info("sspRegistrationRequest: "+ ReflectionToStringBuilder.toString(smartSpace));
+
+        SspRegistryResponse response = new SspRegistryResponse();
+
+        if (smartSpace.getName().equals("reg400") ||
+                smartSpace.getName().equals("reg401")) {
+            response.setStatus(400);
+            response.setMessage("Status 400");
+        }
+        else if (smartSpace.getName().equals("reg500")) {
+            response.setStatus(500);
+            response.setMessage("Status 500");
+        }
+        else
+            response.setStatus(200);
+
+        return response;
+    }
+
+
+    @RabbitListener(bindings = @QueueBinding(
+            value = @Queue(value = "registrySspModificationRequest", durable = "${rabbit.exchange.ssp.durable}",
+                    autoDelete = "${rabbit.exchange.ssp.autodelete}", exclusive = "false"),
+            exchange = @Exchange(value = "${rabbit.exchange.ssp.name}", ignoreDeclarationExceptions = "true",
+                    durable = "${rabbit.exchange.ssp.durable}", autoDelete  = "${rabbit.exchange.ssp.autodelete}",
+                    internal = "${rabbit.exchange.ssp.internal}", type = "${rabbit.exchange.ssp.type}"),
+            key = "${rabbit.routingKey.ssp.modificationRequested}")
+    )
+    public SspRegistryResponse sspModificationRequest(SmartSpace smartSpace) {
+
+        log.info("sspModificationRequest: "+ ReflectionToStringBuilder.toString(smartSpace));
+
+        SspRegistryResponse response = new SspRegistryResponse();
+
+        if (smartSpace.getName().equals("reg400") ||
+                smartSpace.getName().equals("reg401")) {
+            response.setStatus(400);
+            response.setMessage("Status 400");
+        }
+        else if (smartSpace.getName().equals("reg500")) {
+            response.setStatus(500);
+            response.setMessage("Status 500");
+        }
+        else
+            response.setStatus(200);
+
+        return response;
+    }
+
+    @RabbitListener(bindings = @QueueBinding(
+            value = @Queue(value = "registryGetSspDetailsRequest", durable = "${rabbit.exchange.ssp.durable}",
+                    autoDelete = "${rabbit.exchange.ssp.autodelete}", exclusive = "false"),
+            exchange = @Exchange(value = "${rabbit.exchange.ssp.name}", ignoreDeclarationExceptions = "true",
+                    durable = "${rabbit.exchange.ssp.durable}", autoDelete  = "${rabbit.exchange.ssp.autodelete}",
+                    internal = "${rabbit.exchange.ssp.internal}", type = "${rabbit.exchange.ssp.type}"),
+            key = "${rabbit.routingKey.ssp.sspDetailsRequested}")
+    )
+    public SspRegistryResponse getSspDetailsRequest(byte[] body) {
+
+        String sspId;
+        try {
+            sspId = new String(body, "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            log.warn(e);
+            return null;
+        }
+
+        log.info("getSspDetailsRequest: "+ sspId);
+
+
+        SspRegistryResponse response = new SspRegistryResponse();
+
+        ArrayList<String> description = new ArrayList<>();
+        ArrayList<InterworkingService> interworkingServices = new ArrayList<>();
+        SmartSpace smartSpace = new SmartSpace();
+        InterworkingService service = new InterworkingService();
+
+        description.add(sspId + "Description");
+        description.add(sspId + "Comment");
+
+        if (!sspId.equals("validPO2SSP2"))
+            service.setInformationModelId("model2_id");
+        service.setUrl("https://" + sspId.toLowerCase() + ".com/");
+        interworkingServices.add(service);
+
+        smartSpace.setId(sspId);
+        smartSpace.setName(sspId + "Name");
+        smartSpace.setDescription(description);
+        smartSpace.setInterworkingServices(interworkingServices);
+
+        response.setStatus(200);
+        response.setBody(smartSpace);
+
+        return response;
+    }
+
+    @RabbitListener(bindings = @QueueBinding(
+            value = @Queue(value = "registrySspRemovalRequest", durable = "${rabbit.exchange.ssp.durable}",
+                    autoDelete = "${rabbit.exchange.ssp.autodelete}", exclusive = "false"),
+            exchange = @Exchange(value = "${rabbit.exchange.ssp.name}", ignoreDeclarationExceptions = "true",
+                    durable = "${rabbit.exchange.ssp.durable}", autoDelete  = "${rabbit.exchange.ssp.autodelete}",
+                    internal = "${rabbit.exchange.ssp.internal}", type = "${rabbit.exchange.ssp.type}"),
+            key = "${rabbit.routingKey.ssp.removalRequested}")
+    )
+    public SspRegistryResponse sspRemovalRequest(SmartSpace smartSpace) {
+
+        log.info("sspRemovalRequest: "+ ReflectionToStringBuilder.toString(smartSpace));
+
+        SspRegistryResponse response = new SspRegistryResponse();
+        if (smartSpace.getId().equals("validPO2SSP2")) {
             response.setStatus(400);
             response.setMessage("Take care of your resources first!");
         }

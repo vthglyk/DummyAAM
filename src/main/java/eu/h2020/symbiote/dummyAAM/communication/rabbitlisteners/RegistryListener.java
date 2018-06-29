@@ -268,7 +268,7 @@ public class RegistryListener {
         description.add(sspId + "Description");
         description.add(sspId + "Comment");
 
-        if (!sspId.equals("validPO2SSP2"))
+        if (!sspId.equals("SSP_validPO2SSP2"))
             service.setInformationModelId("model2_id");
         service.setUrl("https://" + sspId.toLowerCase() + ".com/");
         interworkingServices.add(service);

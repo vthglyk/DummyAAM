@@ -166,7 +166,7 @@ public class AAMRabbitListener {
         } else if (request.getOperationType() == OperationType.UPDATE) {
             log.info("OperationType.UPDATE");
             if (!request.getInstanceId().equals("reg401") &&
-                    !request.getInstanceId().equals("validPO2Platform1")) {
+                    !request.getInstanceId().equals("validPO2SSP1")) {
                 log.info("UPDATE was accepted");
                 return new SmartSpaceManagementResponse(request.getInstanceId(), ManagementStatus.OK);
 
@@ -177,7 +177,7 @@ public class AAMRabbitListener {
         } else if (request.getOperationType() == OperationType.DELETE) {
             log.info("OperationType.DELETE");
             if (!request.getInstanceId().equals("reg401") &&
-                    !request.getInstanceId().equals("validPO2SSP1")) {
+                    !request.getInstanceId().equals("SSP_validPO2SSP1")) {
                 log.info("DELETE was accepted");
                 return new SmartSpaceManagementResponse(request.getInstanceId(), ManagementStatus.OK);
 
@@ -256,22 +256,22 @@ public class AAMRabbitListener {
                         null, false, null,
                         new Certificate(), new HashMap<>()));
 
-                set.add(new OwnedService(username + "SSP1",
+                set.add(new OwnedService("SSP_" + username + "SSP1",
                         username + "SSP1FriendlyName", OwnedService.ServiceType.SMART_SPACE,
-                        null, "http://" + username + "externalSSP1.com",
-                        false, "http://" + username + "localSSP1.com",
+                        null, "https://" + username.toLowerCase() + "externalssp1.com",
+                        true, "https://" + username.toLowerCase() + "localssp1.com",
                         new Certificate(), new HashMap<>()));
 
-                set.add(new OwnedService(username + "SSP2",
+                set.add(new OwnedService("SSP_" + username + "SSP2",
                         username + "SSP2FriendlyName", OwnedService.ServiceType.SMART_SPACE,
                         null, null,
-                        true, null,
+                        false, null,
                         new Certificate(), new HashMap<>()));
 
-                set.add(new OwnedService(username + "SSP3",
+                set.add(new OwnedService("SSP_" + username + "SSP3",
                         username + "SSP3FriendlyName", OwnedService.ServiceType.SMART_SPACE,
-                        null, "http://" + username + "externalSSP3.com",
-                        true, "http://" + username + "localSSP3.com",
+                        null, "https://" + username.toLowerCase() + "externalssp3.com",
+                        true, "https://" + username.toLowerCase() + "localssp3.com",
                         new Certificate(), new HashMap<>()));
             }
             return set;

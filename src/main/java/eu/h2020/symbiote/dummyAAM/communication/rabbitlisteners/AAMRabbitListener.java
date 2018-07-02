@@ -1,6 +1,7 @@
 package eu.h2020.symbiote.dummyAAM.communication.rabbitlisteners;
 
 import eu.h2020.symbiote.security.commons.Certificate;
+import eu.h2020.symbiote.security.commons.enums.AccountStatus;
 import eu.h2020.symbiote.security.commons.enums.ManagementStatus;
 import eu.h2020.symbiote.security.commons.enums.OperationType;
 import eu.h2020.symbiote.security.commons.enums.UserRole;
@@ -395,23 +396,28 @@ public class AAMRabbitListener {
 
         if (username.equals("valid") || username.equals("valid2"))
             return new UserDetailsResponse(HttpStatus.OK, new UserDetails(new Credentials("validUSER", ""),
-                    username + "email", UserRole.USER, new HashMap<>(), clients));
+                    username + "email", UserRole.USER, AccountStatus.ACTIVE, new HashMap<>(), clients,
+                    true, true));
 
         if (username.equals("icom"))
             return new UserDetailsResponse(HttpStatus.OK, new UserDetails(new Credentials("icom", "icom"),
-                    username + "email", UserRole.SERVICE_OWNER, new HashMap<>(), clients));
+                    username + "email", UserRole.SERVICE_OWNER, AccountStatus.ACTIVE, new HashMap<>(),
+                    clients, true, true));
 
         if (username.equals("validUser"))
             return new UserDetailsResponse(HttpStatus.OK, new UserDetails(new Credentials("validUSER", ""),
-                    username + "email", UserRole.USER, new HashMap<>(), clients));
+                    username + "email", UserRole.USER, AccountStatus.ACTIVE, new HashMap<>(),
+                    clients, true, true));
 
         if (username.equals("validPO"))
             return new UserDetailsResponse(HttpStatus.OK, new UserDetails(new Credentials("validPO", ""),
-                    username + "email", UserRole.SERVICE_OWNER, new HashMap<>(), clients));
+                    username + "email", UserRole.SERVICE_OWNER, AccountStatus.ACTIVE, new HashMap<>(),
+                    clients, true, true));
 
         if (username.equals("validPO2"))
             return new UserDetailsResponse(HttpStatus.OK, new UserDetails(new Credentials("validPO2", ""),
-                    username + "email", UserRole.SERVICE_OWNER, new HashMap<>(), clients));
+                    username + "email", UserRole.SERVICE_OWNER, AccountStatus.ACTIVE, new HashMap<>(),
+                    clients, true, true));
 
         if (username.equals("wrongUsername"))
             return new UserDetailsResponse(HttpStatus.BAD_REQUEST, new UserDetails());

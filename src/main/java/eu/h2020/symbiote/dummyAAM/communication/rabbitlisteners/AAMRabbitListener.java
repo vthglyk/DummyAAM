@@ -327,7 +327,8 @@ public class AAMRabbitListener {
                 return ManagementStatus.OK;
             else
                 return ManagementStatus.ERROR;
-        }
+        } else if (type == OperationType.FORCE_UPDATE)
+            return ManagementStatus.OK;
 
         return ManagementStatus.ERROR;
 
@@ -402,7 +403,7 @@ public class AAMRabbitListener {
         if (username.equals("icom"))
             return new UserDetailsResponse(HttpStatus.OK, new UserDetails(new Credentials("icom", "icom"),
                     username + "email", UserRole.SERVICE_OWNER, AccountStatus.ACTIVE, new HashMap<>(),
-                    clients, true, true));
+                    clients, true, false));
 
         if (username.equals("validUser"))
             return new UserDetailsResponse(HttpStatus.OK, new UserDetails(new Credentials("validUSER", ""),

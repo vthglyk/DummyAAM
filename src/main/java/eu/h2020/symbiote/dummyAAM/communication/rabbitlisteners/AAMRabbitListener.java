@@ -427,7 +427,22 @@ public class AAMRabbitListener {
             return new UserDetailsResponse(HttpStatus.UNAUTHORIZED, new UserDetails());
 
         if (username.equals("wrongAdminPassword"))
-            return new UserDetailsResponse(HttpStatus.FORBIDDEN, new UserDetails());
+            return new UserDetailsResponse(HttpStatus.FORBIDDEN, null);
+
+        if (username.equals("inactiveUser"))
+            return new UserDetailsResponse(HttpStatus.FORBIDDEN, new UserDetails(new Credentials("inactiveUser", ""),
+                    username + "email", UserRole.SERVICE_OWNER, AccountStatus.NEW, new HashMap<>(),
+                    clients, true, true));
+
+        if (username.equals("termsNotAccepted"))
+            return new UserDetailsResponse(HttpStatus.FORBIDDEN, new UserDetails(new Credentials("termsNotAccepted", ""),
+                    username + "email", UserRole.SERVICE_OWNER, AccountStatus.CONSENT_BLOCKED, new HashMap<>(),
+                    clients, false, true));
+
+        if (username.equals("blocked"))
+            return new UserDetailsResponse(HttpStatus.FORBIDDEN, new UserDetails(new Credentials("blocked", ""),
+                    username + "email", UserRole.SERVICE_OWNER, AccountStatus.ACTIVITY_BLOCKED, new HashMap<>(),
+                    clients, false, true));
 
         return null;
     }
